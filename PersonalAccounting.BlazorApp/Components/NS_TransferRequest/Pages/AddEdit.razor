@@ -1,0 +1,197 @@
+﻿@page "/Transfers/Add/{id?}"
+@rendermode InteractiveServer
+
+@using PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services
+@using System.Globalization
+@using PersonalAccounting.Domain.Data
+
+
+<PageTitle>Add/Edit</PageTitle>
+
+@inject TransferRequestService Service
+@inject NavigationManager Navigation
+
+@if (isNew)
+{
+    <h1>Add Request</h1>
+}
+else
+{
+    <h1>Edit/View Request</h1>
+}
+
+<div>
+    <EditForm Model="master" OnValidSubmit="HandleSubmit" method="post" FormName="registerTransfer">
+        <DataAnnotationsValidator />
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="master.FromUserName" class="form-control" aria-required="true" placeholder="name@example.com" />
+                    <label for="FromUserName">From</label>
+                    <ValidationMessage For="() => master.FromUserName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="master.ToUserName" class="form-control" aria-required="true" placeholder="Custom note" />
+                    <label for="ToUserName">To</label>
+                    <ValidationMessage For="() => master.ToUserName" class="text-danger" />
+                </div>
+                <hr />
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="master.ReceiverUserName" class="form-control" aria-required="true" placeholder="name@example.com" />
+                    <label for="ReceiverUserName">Receive</label>
+                    <ValidationMessage For="() => master.ReceiverUserName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="master.ReceiverAccountNo" class="form-control" aria-required="true" placeholder="88774466332211" />
+                    <label for="ReceiverAccountNo">Receiver Account No</label>
+                    <ValidationMessage For="() => master.ReceiverAccountNo" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="master.ReceiverNote" class="form-control" aria-required="true" placeholder="Custom note" />
+                    <label for="ReceiverNote">Note</label>
+                    <ValidationMessage For="() => master.ReceiverNote" class="text-danger" />
+                </div>
+                <hr />
+                <div class="form-floating mb-3">
+                    <InputSelect @bind-Value="master.Status" class="form-control" aria-required="true" placeholder="Custom note">
+                        <option selected value="Draft">Draft</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Done">Done</option>
+                    </InputSelect>
+                    <label for="Status">Status</label>
+                    <ValidationMessage For="() => master.Status" class="text-danger" />
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-floating mb-3">
+                    <InputSelect @bind-Value="master.SourceCurrencyName" class="form-control" aria-required="true">
+                        <option selected value="CAD">CAD</option>
+                        <option value="IRR">IRR</option>
+                        <option value="USD">USD</option>
+                    </InputSelect>
+                    <label for="SourceCurrencyName">Source Currency Name</label>
+                    <ValidationMessage For="() => master.SourceCurrencyName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputNumber ValueExpression="() => master.SourceAmount" ValueChanged="(decimal e) => { master.SourceAmount = e;HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
+                    <label for="SourceAmount">Source Amount</label>
+                    <ValidationMessage For="() => master.SourceAmount" class="text-danger" />
+                </div>
+                <hr />
+                <div class="form-floating mb-3">
+                    <InputSelect @bind-Value="master.DestinationCurrencyName" class="form-control" aria-required="true">
+                        <option selected value="CAD">CAD</option>
+                        <option value="IRR">IRR</option>
+                        <option value="USD">USD</option>
+                    </InputSelect>
+                    <label for="DestinationCurrencyName">Destination Currency Name</label>
+                    <ValidationMessage For="() => master.DestinationCurrencyName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputNumber @bind-Value="master.ExchangeRate" @oninput="(ChangeEventArgs e) => { master.ExchangeRate = decimal.Parse(e.Value.ToString());HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
+                    <label for="ExchangeRate">Exchange Rate</label>
+                    <ValidationMessage For="() => master.ExchangeRate" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputSelect @bind-Value="master.FeeCurrencyName" @oninput="(ChangeEventArgs e) => { master.FeeCurrencyName = (string)e.Value;HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true">
+                        <option selected value="CAD">CAD</option>
+                        <option value="IRR">IRR</option>
+                        <option value="USD">USD</option>
+                    </InputSelect>
+                    <label for="FeeCurrencyName">Fee Currency Name</label>
+                    <ValidationMessage For="() => master.FeeCurrencyName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputNumber @bind-Value="master.Fee" @oninput="(ChangeEventArgs e) => { master.Fee = decimal.Parse(e.Value.ToString());HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
+                    <label for="Fee">Fee</label>
+                    <ValidationMessage For="() => master.Fee" class="text-danger" />
+                </div>
+                <hr />
+                <div class="form-floating mb-3">
+                    <InputNumber @bind-Value="master.DestinationAmount" @oninput="(ChangeEventArgs e) => { master.DestinationAmount = decimal.Parse(e.Value.ToString());HandleCalculateSourceAmount(); }" class="form-control" aria-required="true" />
+                    <span> @master.DestinationAmount.ToString("N2") @master.DestinationCurrencyName</span>
+                    <label for="DestinationAmount">Destination Amount</label>
+                    <ValidationMessage For="() => master.DestinationAmount" class="text-danger" />
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save</button>
+    </EditForm>
+
+    @if (!isNew)
+    {
+        <h2>Details</h2>
+        <ul>
+            @foreach (var detail in master.Details)
+            {
+                <li>
+                    @detail.CreateUserFullName - @detail.Comment
+                </li>
+            }
+        </ul>
+
+        <h3>Add Comment</h3>
+        <EditForm Model="@newDetail" OnSubmit="@HandleDetailSubmit">
+            <div class="form-group">
+                <label for="comment">Comment:</label>
+                <InputText id="comment" @bind-Value="@newDetail.Comment" />
+                @* <ValidationMessage for="@(() => newDetail.Comment)" /> *@
+            </div>
+            <button type="submit" class="btn btn-success">Add Comment</button>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private TransferRequest master { get; set; } = default!; // Initialize with default value
+    private TransferRequestDetail newDetail = new TransferRequestDetail();
+
+    private bool isNew { get; set; }
+
+    [Parameter]
+    public string id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isNew = string.IsNullOrEmpty(this.id);
+        if (isNew)
+        {
+            master = new TransferRequest(); // Create new instance
+        }
+        else
+        {
+            master = await Service.GetTransferRequestByIdAsync(int.Parse(id));
+        }
+    }
+
+    public async Task HandleSubmit(EditContext editContext)
+    {
+        if (master.Id == 0) // New master
+        {
+            await Service.AddTransferRequestAsync(master);
+        }
+        else // Existing master
+        {
+            await Service.UpdateTransferRequestAsync(master);
+        }
+        Navigation.NavigateTo("/Transfers/List");
+    }
+
+    void HandleCalculateDestinationAmount()
+    {
+        this.master.CalculateDestinationAmount();
+    }
+
+    void HandleCalculateSourceAmount()
+    {
+        this.master.CalculateSourceAmount();
+    }
+
+    private async Task HandleDetailSubmit()
+    {
+        newDetail.TransferRequestId = master.Id; // Set master ID for new detail
+        await Service.AddDetailAsync(newDetail);
+        newDetail.Comment = ""; // Clear comment field after adding
+    }
+}

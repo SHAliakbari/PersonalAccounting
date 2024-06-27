@@ -1,0 +1,41 @@
+﻿@page "/Transfers/List"
+@using PersonalAccounting.Domain.Data
+@rendermode InteractiveServer
+
+@inject PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services.TransferRequestService Service
+@inject NavigationManager NavigationManager
+
+
+<h1>TransferRequest List</h1>
+
+<a href="/Transfers/Add">Add New</a>
+<ul>
+    @foreach (var master in getList())
+    {
+        <li>
+            @master.FromUserFullName - @master.ToUserFullName
+            <br />
+            <button @onclick="@(() => NavigateToDetails(master.Id))">View Details</button>
+        </li>
+    }
+</ul>
+
+@code  {
+
+    List<TransferRequest> getList() 
+    {
+        return Service.GetTransferRequestsAsync().Result;
+    }
+
+    private void NavigateToDetails(int id)
+    {
+        // Use navigation manager to redirect to details page
+        NavigationManager.NavigateTo($"/Transfers/Add/{id}");
+    }
+
+    private void NavigateToAdd()
+    {
+        // Use navigation manager to redirect to details page
+        NavigationManager.NavigateTo($"/Transfers/Add");
+    }
+}
