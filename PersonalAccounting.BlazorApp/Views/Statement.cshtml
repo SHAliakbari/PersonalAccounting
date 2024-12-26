@@ -1,0 +1,77 @@
+@using System.Globalization;
+@using System.Web
+@model PersonalAccounting.Domain.Reports.StatementModel
+<html>
+<head>
+</head>
+<body>
+    <h1>Statement - @DateTime.Now.ToShortDateString() - @DateOnly.FromDateTime(DateTime.Now).ConvertToPersianCalendar()</h1>
+
+    <style>
+        .grid {
+            margin-top: 5px;
+        }
+
+            .grid .transfersList {
+                width: 100%;
+                font-size: 14px !important;
+            }
+
+                .grid .transfersList td, .grid .transfersList th {
+                    border: 1px solid gray;
+                }
+
+                /* Stripe effect */
+                .grid .transfersList tbody tr {
+                    background-color: rgba(0,0,0,0.04);
+                }
+
+                    .grid .transfersList tbody tr:nth-child(even) {
+                        background: rgba(255,255,255,0.4);
+                    }
+
+                    .grid .transfersList tbody tr td {
+                        padding: 4px;
+                        font-size: 14px !important;
+                    }
+
+    </style>
+    <div class="grid">
+        <table class="transfersList" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Receiver</th>
+                    <th>Description</th>
+                    <th>Debit</th>
+                    <th>Credit</th>
+                    <th>Remain</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Requests)
+                {
+                    <tr>
+                        <td>@item.RequestDate @item.RequestDate.ConvertToPersianCalendar()</td>
+                        <td>@(item.FromUserFullName ?? item.FromUserName)</td>
+                        <td>@(item.ToUserFullName ?? item.ToUserName)</td>
+                        <td>@(item.ReceiverUserFullName ?? item.ReceiverUserName)</td>
+                        <td>@Html.Raw(item.ReceiverNote)</td>
+                        <td>@(item.Debit > 0 ? item.Debit.ToString("N0") : "")</td>
+                        <td>@(item.Credit > 0 ? item.Credit.ToString("N0") : "")</td>
+                        <td>@item.RunningTotal.ToString("N0")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="7" style="text-align:right">Total </td>
+                    <td><b>@Model.Requests.LastOrDefault()?.RunningTotal.ToString("##,##")</b></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</body>
+</html>

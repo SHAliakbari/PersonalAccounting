@@ -1,16 +1,74 @@
 ﻿@page "/Transfers/Add/{id?}"
 @rendermode InteractiveServer
+@attribute [Authorize]
 
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.StaticFiles
+@using Microsoft.EntityFrameworkCore
+@using PersonalAccounting.BlazorApp.Components.Account
 @using PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services
 @using System.Globalization
 @using PersonalAccounting.Domain.Data
+@using System.Security.Claims
+@using PersonalAccounting.Domain.Services
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.PixelFormats
+@using SixLabors.ImageSharp.Processing
 
 
-<PageTitle>Add/Edit</PageTitle>
+
+<PageTitle>@(isNew ? "Request New" : "Edit") Transfer</PageTitle>
 
 @inject TransferRequestService Service
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IWebHostEnvironment Environment
+@inject ILogger<AddEdit> logger;
+@inject IJSRuntime _js;
+@inject BlobService blobService;
 
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor;
+@inject IdentityUserAccessor UserAccessor
+
+<script type="text/javascript">
+    async function viewFileFromStream(fileName, contentStreamReference, mimeType) {
+        window.URL = window.URL || window.webkitURL;
+
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+
+        const anchorElement = document.createElement('a');
+        document.body.appendChild(anchorElement);
+
+        anchorElement.setAttribute("type", "hidden");
+        anchorElement.href = url;
+        anchorElement.target = "_blank";
+        anchorElement.click();
+
+        anchorElement.remove();
+        window.URL.revokeObjectURL(url);
+    };
+
+    async function viewFileFromUrl(url) {
+        window.URL = window.URL || window.webkitURL;
+
+        const anchorElement = document.createElement('a');
+        anchorElement.setAttribute("type", "hidden");
+        anchorElement.href = url;
+        anchorElement.target = "_blank";
+
+        document.body.appendChild(anchorElement);
+        anchorElement.click();
+        anchorElement.remove();
+    };
+</script>
+<style>
+    .comments .comment {
+        border: 1px solid gray;
+    }
+</style>
 @if (isNew)
 {
     <h1>Add Request</h1>
@@ -26,34 +84,46 @@ else
         <div class="row">
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="master.FromUserName" class="form-control" aria-required="true" placeholder="name@example.com" />
+                    <InputDate disabled="@(!isAdmin)" @bind-Value="master.RequestDate" class="form-control" aria-required="true" />
+                    <label for="RequestDate">Request Date</label>
+                    <ValidationMessage For="() => master.RequestDate" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText disabled="@(!isAdmin)" @onblur="FillFromUserInformation" @bind-Value="master.FromUserName" class=@{$"{FromUserClassName} form-control"} aria-required="true" placeholder="name@example.com" />
                     <label for="FromUserName">From</label>
+                    
                     <ValidationMessage For="() => master.FromUserName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="master.ToUserName" class="form-control" aria-required="true" placeholder="Custom note" />
+                    <InputText disabled="@(!isAdmin)" @onblur="FillToUserInformation" @bind-Value="master.ToUserName" class=@{$"{ToUserClassName} form-control"} aria-required="true" placeholder="Custom note" />
                     <label for="ToUserName">To</label>
                     <ValidationMessage For="() => master.ToUserName" class="text-danger" />
                 </div>
                 <hr />
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="master.ReceiverUserName" class="form-control" aria-required="true" placeholder="name@example.com" />
+                    <InputText disabled="@(!isAdmin)" @onblur="handleReceiverUserNameChange" @bind-Value="master.ReceiverUserName" class=@{$"{ReceiverUserClassName} form-control"
+} aria-required="true" placeholder="name@example.com" />
                     <label for="ReceiverUserName">Receive</label>
                     <ValidationMessage For="() => master.ReceiverUserName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="master.ReceiverAccountNo" class="form-control" aria-required="true" placeholder="88774466332211" />
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.ReceiverAccountNo" class="form-control" aria-required="true" placeholder="88774466332211" />
                     <label for="ReceiverAccountNo">Receiver Account No</label>
                     <ValidationMessage For="() => master.ReceiverAccountNo" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText @bind-Value="master.ReceiverNote" class="form-control" aria-required="true" placeholder="Custom note" />
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.ReceiverCardNo" class="form-control" aria-required="true" placeholder="88774466332211" />
+                    <label for="ReceiverAccountNo">Receiver Card No</label>
+                    <ValidationMessage For="() => master.ReceiverCardNo" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputTextArea rows="7" disabled="@(!isAdmin)" @bind-Value="master.ReceiverNote" class="form-control" aria-required="true" placeholder="Custom note" />
                     <label for="ReceiverNote">Note</label>
                     <ValidationMessage For="() => master.ReceiverNote" class="text-danger" />
                 </div>
                 <hr />
                 <div class="form-floating mb-3">
-                    <InputSelect @bind-Value="master.Status" class="form-control" aria-required="true" placeholder="Custom note">
+                    <InputSelect disabled="@(!isAdmin)" @bind-Value="master.Status" class="form-control" aria-required="true" placeholder="Custom note">
                         <option selected value="Draft">Draft</option>
                         <option value="Pending">Pending</option>
                         <option value="Done">Done</option>
@@ -63,23 +133,29 @@ else
                 </div>
             </div>
             <div class="col-sm-6">
-                <div class="form-floating mb-3">
-                    <InputSelect @bind-Value="master.SourceCurrencyName" class="form-control" aria-required="true">
-                        <option selected value="CAD">CAD</option>
-                        <option value="IRR">IRR</option>
-                        <option value="USD">USD</option>
-                    </InputSelect>
-                    <label for="SourceCurrencyName">Source Currency Name</label>
-                    <ValidationMessage For="() => master.SourceCurrencyName" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputNumber ValueExpression="() => master.SourceAmount" ValueChanged="(decimal e) => { master.SourceAmount = e;HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
-                    <label for="SourceAmount">Source Amount</label>
-                    <ValidationMessage For="() => master.SourceAmount" class="text-danger" />
-                </div>
+                @if (isAdmin)
+                {
+                    <div class="form-floating mb-3">
+                        <InputSelect @bind-Value="master.SourceCurrencyName" class="form-control" aria-required="true">
+                            <option selected value="CAD">CAD</option>
+                            <option value="IRR">IRR</option>
+                            <option value="USD">USD</option>
+                        </InputSelect>
+                        <label for="SourceCurrencyName">Source Currency Name</label>
+                        <ValidationMessage For="() => master.SourceCurrencyName" class="text-danger" />
+                    </div>
+                }
+                @if (isAdmin)
+                {
+                    <div class="form-floating mb-3">
+                        <InputNumber @bind-Value="master.SourceAmount" @oninput="(ChangeEventArgs e) => { master.SourceAmount = string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse((e.Value.ToString()));HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
+                        <label for="SourceAmount">Source Amount</label>
+                        <ValidationMessage For="() => master.SourceAmount" class="text-danger" />
+                    </div>
+                }
                 <hr />
                 <div class="form-floating mb-3">
-                    <InputSelect @bind-Value="master.DestinationCurrencyName" class="form-control" aria-required="true">
+                    <InputSelect disabled="@(!isAdmin)" @bind-Value="master.DestinationCurrencyName" class="form-control" aria-required="true">
                         <option selected value="CAD">CAD</option>
                         <option value="IRR">IRR</option>
                         <option value="USD">USD</option>
@@ -87,73 +163,142 @@ else
                     <label for="DestinationCurrencyName">Destination Currency Name</label>
                     <ValidationMessage For="() => master.DestinationCurrencyName" class="text-danger" />
                 </div>
-                <div class="form-floating mb-3">
-                    <InputNumber @bind-Value="master.ExchangeRate" @oninput="(ChangeEventArgs e) => { master.ExchangeRate = decimal.Parse(e.Value.ToString());HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
-                    <label for="ExchangeRate">Exchange Rate</label>
-                    <ValidationMessage For="() => master.ExchangeRate" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputSelect @bind-Value="master.FeeCurrencyName" @oninput="(ChangeEventArgs e) => { master.FeeCurrencyName = (string)e.Value;HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true">
-                        <option selected value="CAD">CAD</option>
-                        <option value="IRR">IRR</option>
-                        <option value="USD">USD</option>
-                    </InputSelect>
-                    <label for="FeeCurrencyName">Fee Currency Name</label>
-                    <ValidationMessage For="() => master.FeeCurrencyName" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputNumber @bind-Value="master.Fee" @oninput="(ChangeEventArgs e) => { master.Fee = decimal.Parse(e.Value.ToString());HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
-                    <label for="Fee">Fee</label>
-                    <ValidationMessage For="() => master.Fee" class="text-danger" />
-                </div>
+                @if (isAdmin)
+                {
+                    <div class="form-floating mb-3">
+                        <InputNumber @bind-Value="master.ExchangeRate" @oninput="(ChangeEventArgs e) => { master.ExchangeRate = string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse((e.Value.ToString()));HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
+                        <label for="ExchangeRate">Exchange Rate</label>
+                        <ValidationMessage For="() => master.ExchangeRate" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputSelect @bind-Value="master.FeeCurrencyName" @oninput="(ChangeEventArgs e) => { master.FeeCurrencyName = (string)e.Value;HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true">
+                            <option selected value="CAD">CAD</option>
+                            <option value="IRR">IRR</option>
+                            <option value="USD">USD</option>
+                        </InputSelect>
+                        <label for="FeeCurrencyName">Fee Currency Name</label>
+                        <ValidationMessage For="() => master.FeeCurrencyName" class="text-danger" />
+                    </div>
+                    <div class="form-floating mb-3">
+                        <InputNumber @bind-Value="master.Fee" @oninput="(ChangeEventArgs e) => { master.Fee =string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse(e.Value.ToString());HandleCalculateDestinationAmount(); }" class="form-control" aria-required="true" />
+                        <label for="Fee">Fee</label>
+                        <ValidationMessage For="() => master.Fee" class="text-danger" />
+                    </div>
+                }
                 <hr />
                 <div class="form-floating mb-3">
-                    <InputNumber @bind-Value="master.DestinationAmount" @oninput="(ChangeEventArgs e) => { master.DestinationAmount = decimal.Parse(e.Value.ToString());HandleCalculateSourceAmount(); }" class="form-control" aria-required="true" />
+                    <InputNumber disabled="@(!isAdmin)" @bind-Value="master.DestinationAmount" @oninput="(ChangeEventArgs e) => { master.DestinationAmount = string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse(e.Value.ToString());HandleCalculateSourceAmount(); }" class="form-control" aria-required="true" />
                     <span> @master.DestinationAmount.ToString("N2") @master.DestinationCurrencyName</span>
                     <label for="DestinationAmount">Destination Amount</label>
                     <ValidationMessage For="() => master.DestinationAmount" class="text-danger" />
                 </div>
             </div>
         </div>
-
-        <button type="submit" class="btn btn-primary">Save</button>
+        <ValidationSummary />
+        <div class="text-end">
+            @if (isAdmin)
+            {
+                <button type="submit" class="btn btn-primary  ">Save</button>
+            }
+        </div>
     </EditForm>
 
     @if (!isNew)
     {
-        <h2>Details</h2>
-        <ul>
-            @foreach (var detail in master.Details)
-            {
-                <li>
-                    @detail.CreateUserFullName - @detail.Comment
-                </li>
-            }
-        </ul>
+        <hr />
+        @if (master.Details.Any())
+        {
+            <h2>Comments</h2>
 
-        <h3>Add Comment</h3>
-        <EditForm Model="@newDetail" OnSubmit="@HandleDetailSubmit">
-            <div class="form-group">
-                <label for="comment">Comment:</label>
-                <InputText id="comment" @bind-Value="@newDetail.Comment" />
-                @* <ValidationMessage for="@(() => newDetail.Comment)" /> *@
+            <div class="comments">
+                @foreach (var detail in master.Details)
+                {
+                    <div class="row comment">
+                        <div class="col-5">
+                            <b class="small">@detail.CreateUserFullName</b>
+                            <span class=" small">@detail.CreateDate.ToLocalTime()</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(detail.FileName))
+                        {
+                            <div class="col-6">
+                                <button type="button" class="btn btn-success pull" @onclick="() => OpenFile(detail)">
+                                    <i class="bi bi-download"></i>
+                                    Download  <b>@detail.FileName</b>
+                                </button>
+                            </div>
+                        }
+                        <div class="col-6">
+                            <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteComment(detail)">Delete</button>
+                        </div>
+                    </div>
+                    <div class="row comment">
+
+                        <div>@detail.Comment</div>
+
+                        @if (detail.Thumbnail != null)
+                        {
+                            <div>
+                                <img @ondblclick="() => OpenFile(detail)" width="100" height="100" src="data:image;base64, @System.Convert.ToBase64String(detail.Thumbnail)" />
+                            </div>
+                        }
+                    </div>
+                }
             </div>
-            <button type="submit" class="btn btn-success">Add Comment</button>
-        </EditForm>
+        }
+
+        @if (isAdmin)
+        {
+            <h3>Add New Comment</h3>
+            <EditForm Model="@newDetail" OnSubmit="@HandleDetailSubmit">
+                <div class="form-group">
+                    <label for="comment">Comment:</label>
+                    <InputTextArea required class="form-control" id="comment" @bind-Value="@newDetail.Comment" />
+                    <ValidationMessage For="() => newDetail.Comment" class="text-danger" />
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-success">Add Comment</button>
+                </div>
+            </EditForm>
+            <hr />
+            <div class="form-group">
+                <label>Upload Files:</label>
+                <InputFile OnChange="LoadFiles" multiple />
+            </div>
+        }
     }
 </div>
 
 @code {
     private TransferRequest master { get; set; } = default!; // Initialize with default value
     private TransferRequestDetail newDetail = new TransferRequestDetail();
+    private List<ApplicationUser> users;
+
+    private string FromUserClassName = string.Empty;
+    private string ToUserClassName = string.Empty;
+    private string ReceiverUserClassName = string.Empty;
 
     private bool isNew { get; set; }
+
+    string uploadStatus = "";
 
     [Parameter]
     public string id { get; set; }
 
+    ApplicationUser user;
+    string name;
+    bool isAdmin = false;
+
     protected override async Task OnInitializedAsync()
     {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContextAccessor.HttpContext);
+        name = user.UserName;
+        isAdmin = await UserManager.IsInRoleAsync(user, "admin");
+
+        // if (isAdmin)
+        {
+            users = await UserManager.Users.ToListAsync();
+        }
+
         isNew = string.IsNullOrEmpty(this.id);
         if (isNew)
         {
@@ -161,8 +306,180 @@ else
         }
         else
         {
-            master = await Service.GetTransferRequestByIdAsync(int.Parse(id));
+            await LoadMaster(int.Parse(id));
         }
+    }
+
+    private void FillFromUserInformation(FocusEventArgs e)
+    {
+        if (master.FromUserName != null)
+        {
+            var user = users.FirstOrDefault(x => x.Email == master.FromUserName);
+            if (user != null)
+            {
+                master.FromUserFullName = user.FullName;
+                master.FromUserId = user.Id;
+                FromUserClassName = "border border-success";
+                return;
+            }
+        }
+        FromUserClassName = "border border-danger";
+        master.FromUserFullName = string.Empty;
+        master.FromUserId = string.Empty;
+    }
+
+    private void FillToUserInformation(FocusEventArgs e)
+    {
+        if (master.ToUserName != null)
+        {
+            var user = users.FirstOrDefault(x => x.Email == master.ToUserName);
+            if (user != null)
+            {
+                master.ToUserFullName = user.FullName;
+                master.ToUserId = user.Id;
+                ToUserClassName = "border border-success";
+                return;
+            }
+        }
+        ToUserClassName = "border border-danger";
+        master.ToUserFullName = string.Empty;
+        master.ToUserId = string.Empty;
+    }
+
+    private void handleReceiverUserNameChange(FocusEventArgs e)
+    {
+        if (master.ReceiverUserName != null)
+        {
+            var user = users.FirstOrDefault(x => x.Email == master.ReceiverUserName);
+            if (user != null)
+            {
+                if (!string.IsNullOrEmpty(user.AccountNo))
+                    master.ReceiverAccountNo = user.AccountNo;
+                if (!string.IsNullOrEmpty(user.CardNo))
+                    master.ReceiverCardNo = user.CardNo;
+
+                master.ReceiverUserFullName = user.FullName;
+                master.ReceiverUserId = user.Id;
+                ReceiverUserClassName = "border border-success";
+                return;
+            }
+        }
+        ReceiverUserClassName = "border border-danger";
+        master.ReceiverUserFullName = string.Empty;
+        master.ReceiverUserId = string.Empty;
+    }
+
+    private async Task OpenFile(TransferRequestDetail detail)
+    {
+        var content = await blobService.Download(detail.FileName);
+
+        MemoryStream stream = new MemoryStream(content);
+        stream.Position = 0;
+        using var streamRef = new DotNetStreamReference(stream);
+        await _js.InvokeVoidAsync("viewFileFromStream", detail.FileName, streamRef, GetMimeTypeForFileExtension(detail.FileName));
+    }
+
+    public string GetMimeTypeForFileExtension(string filePath)
+    {
+        const string DefaultContentType = "application/octet-stream";
+
+        var provider = new FileExtensionContentTypeProvider();
+
+        if (!provider.TryGetContentType(filePath, out string contentType))
+        {
+            contentType = DefaultContentType;
+        }
+
+        return contentType;
+    }
+
+    private async Task DeleteComment(TransferRequestDetail detail)
+    {
+        if (!string.IsNullOrEmpty(detail.FileName))
+        {
+            await blobService.Delete(detail.FileName);
+        }
+        await Service.DeleteDetailAsync(detail.Id);
+        await LoadMaster(int.Parse(id));
+    }
+
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            long maxFileSize = 1024L * 1024L * 1024L * 2L;
+            var files = e.GetMultipleFiles();
+            if (files.Count > 0)
+            {
+                uploadStatus = "uploading";
+                foreach (var file in files)
+                {
+                    using var memoryStream = new MemoryStream();
+                    await file.OpenReadStream(maxFileSize).CopyToAsync(memoryStream);
+
+                    byte[]? thumbnail = null;
+                    var fileType = Path.GetExtension(file.Name);
+                    if (fileType.EndsWith("jpg")
+                    || fileType.EndsWith("jpeg")
+                    || fileType.EndsWith("png"))
+                    {
+                        thumbnail = GetReducedImage(256, 256, memoryStream);
+                        // if (thumbnail != null)
+                        //     thumbnail.Save(thumbnailStream, System.Drawing.Imaging.ImageFormat.Png);
+                    }
+                    var fileName = await blobService.Upload(file.Name, memoryStream.ToArray());
+
+                    TransferRequestDetail attachment = new TransferRequestDetail()
+                        {
+                            CreateDate = DateTime.UtcNow,
+                            CreateUserName = name,
+                            CreateUserFullName = name,
+
+                            FileName = fileName,
+                            Thumbnail = thumbnail,
+                            TransferRequestId = master.Id
+                        };
+
+                    await Service.AddDetailAsync(attachment);
+                }
+                uploadStatus = "upload done";
+                await LoadMaster(int.Parse(id));
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Upload Method");
+            throw;
+        }
+    }
+
+    private byte[]? GetReducedImage(int width, int height, Stream resourceImage)
+    {
+        try
+        {
+            resourceImage.Seek(0, SeekOrigin.Begin);
+            using MemoryStream memoryStream = new MemoryStream();
+            using (Image image = Image.Load(resourceImage))
+            {
+                image.Mutate(x => x
+                     .Resize(width, height)
+                     .Grayscale());
+                image.Save(memoryStream, SixLabors.ImageSharp.Formats.Png.PngFormat.Instance); // Automatic encoder selected based on extension.
+            }
+
+            return memoryStream.ToArray();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "GetReducedImage");
+            return null;
+        }
+    }
+
+    private async Task LoadMaster(int id)
+    {
+        master = await Service.GetTransferRequestByIdAsync(id);
     }
 
     public async Task HandleSubmit(EditContext editContext)
@@ -190,8 +507,13 @@ else
 
     private async Task HandleDetailSubmit()
     {
+        newDetail.CreateDate = DateTime.UtcNow;
+        newDetail.CreateUserName = name;
+        newDetail.CreateUserFullName= name;
+
         newDetail.TransferRequestId = master.Id; // Set master ID for new detail
         await Service.AddDetailAsync(newDetail);
         newDetail.Comment = ""; // Clear comment field after adding
+        await LoadMaster(int.Parse(id));
     }
 }

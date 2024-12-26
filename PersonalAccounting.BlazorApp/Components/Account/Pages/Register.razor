@@ -5,6 +5,7 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.EntityFrameworkCore
 @using PersonalAccounting.Domain.Data
 
 @inject UserManager<ApplicationUser> UserManager
@@ -14,6 +15,7 @@
 @inject ILogger<Register> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject CustomIdentityService CustomIdentityService;
 
 <PageTitle>Register</PageTitle>
 
@@ -42,6 +44,11 @@
                 <label for="confirm-password">Confirm Password</label>
                 <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
             </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.InviteCode" placeholder="Enter invite code" />
+                <label for="confirm-password">Invite Code</label>
+                <ValidationMessage For="() => Input.InviteCode" class="text-danger" />
+            </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
     </div>
@@ -67,6 +74,13 @@
 
     public async Task RegisterUser(EditContext editContext)
     {
+        var isValidInvite = await CustomIdentityService.ValidateInviteCodeAsync(Input.InviteCode);
+        if (!isValidInvite)
+        {
+            identityErrors = new List<IdentityError>() { new IdentityError() { Code = "1000", Description = "BadInviteCode" } };
+            return;
+        }
+
         var user = CreateUser();
 
         await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -141,5 +155,9 @@
         [Display(Name = "Confirm password")]
         [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
         public string ConfirmPassword { get; set; } = "";
+
+        [Required]
+        [Display(Name = "InviteCode")]
+        public string InviteCode { get; set; } = "";
     }
 }

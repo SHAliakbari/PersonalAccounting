@@ -1,30 +1,153 @@
 ﻿@page "/Transfers/List"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using PersonalAccounting.BlazorApp.Components.Account
 @using PersonalAccounting.Domain.Data
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.Text.Json
+@using System.Globalization
 @rendermode InteractiveServer
+
+@attribute [Authorize]
+@attribute [StreamRendering]
 
 @inject PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services.TransferRequestService Service
 @inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
+ @inject IHttpContextAccessor HttpContextAccessor;
+@inject ILogger<List> logger;
+@inject IdentityUserAccessor UserAccessor
 
+<PageTitle>TransferRequest List</PageTitle>
+<h3>
+    TransferRequest List
+    <InputText type="text" @bind-Value="SearchTerm" />
+    <button type="button btn-sm" @onclick="HandleSearchButton">Filter</button>
+</h3>
 
-<h1>TransferRequest List</h1>
-
-<a href="/Transfers/Add">Add New</a>
-<ul>
-    @foreach (var master in getList())
-    {
-        <li>
-            @master.FromUserFullName - @master.ToUserFullName
-            <br />
-            <button @onclick="@(() => NavigateToDetails(master.Id))">View Details</button>
-        </li>
+<style>
+    .grid {
+        margin-top: 5px;
     }
-</ul>
 
-@code  {
+        .grid .transfersList {
+            width: 100%;
+        }
 
-    List<TransferRequest> getList() 
+            .grid .transfersList td, .grid .transfersList th {
+                border: 1px solid gray;
+            }
+
+            /* Stripe effect */
+            .grid .transfersList tbody tr {
+                background-color: rgba(0,0,0,0.04);
+            }
+
+                .grid .transfersList tbody tr:nth-child(even) {
+                    background: rgba(255,255,255,0.4);
+                }
+
+</style>
+
+@if (isAdmin)
+{
+    <a href="/Transfers/Add" class="btn btn-primary">Add New</a>
+}
+<br />
+@if (isLoading == true)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="grid" tabindex="-1">
+
+        <QuickGrid TGridItem="TransferRequest" Items="@requests" Class="transfersList">
+            <TemplateColumn Title="Request Date">
+                <div>
+                    <div>@context.RequestDate</div>
+                    <div>@context.RequestDate.ConvertToPersianCalendar()</div>
+                </div>
+            </TemplateColumn>
+            <PropertyColumn Property="@(c => c.FromUserFullName)" Sortable="true" Title="From" />
+            <PropertyColumn Property="@(c => c.ToUserFullName)" Sortable="true" Title="To" />
+            <PropertyColumn Property="@(c => c.ReceiverUserFullName)" Sortable="true" Title="Receiver" />
+            <PropertyColumn Property="@(c => $"{((isAdmin && c.SourceCurrencyName != c.DestinationCurrencyName) ? $"{FormatCurrecny(c.SourceAmount,c.SourceCurrencyName)} ~~" : "")} {FormatCurrecny(c.DestinationAmount,c.DestinationCurrencyName)}")" Title="Amount" />
+            <PropertyColumn Property="@(c => c.Status)" Sortable="true" Title="Status" />
+            <TemplateColumn Title="Actions">
+                <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+            </TemplateColumn>
+        </QuickGrid>
+    </div>
+}
+
+@code {
+    string SearchTerm = "";
+    GridItemsProvider<TransferRequest>? transferRequestsProvider;
+    private bool isLoading = false;
+    IQueryable<TransferRequest>? requests;
+
+    bool isAdmin = false;
+
+    protected override async Task OnInitializedAsync()
     {
-        return Service.GetTransferRequestsAsync().Result;
+        requests = await getList();
+        InitList();
+    }
+
+    private string FormatCurrecny(decimal amount, string currency)
+    {
+        if (amount > 1000000)
+        {
+            amount /= 1000000;
+            currency = "M-" + currency;
+            return $"{amount.ToString("##,##.##")} {currency}";
+        }
+        return $"{amount.ToString("##,##")} {currency}";
+    }
+
+    async Task HandleSearchButton()
+    {
+        requests = await getList();
+        requests = requests.Where(x =>
+            x.FromUserName.Contains(SearchTerm) ||
+            x.FromUserFullName.Contains(SearchTerm) ||
+            x.ToUserName.Contains(SearchTerm) ||
+            x.ToUserFullName.Contains(SearchTerm) ||
+            x.ReceiverUserName.Contains(SearchTerm) ||
+            x.ReceiverUserFullName.Contains(SearchTerm) ||
+            x.ReceiverCardNo.Contains(SearchTerm) ||
+            x.ReceiverAccountNo.Contains(SearchTerm) ||
+            x.ReceiverNote.Contains(SearchTerm)
+        );
+        InitList();
+    }
+
+    private void InitList()
+    {
+        // Define the GridItemsProvider. Its job is to convert QuickGrid's GridItemsProviderRequest into a query against
+        // an arbitrary data soure. In this example, we need to translate query parameters into the particular URL format
+        // supported by the external JSON API. It's only possible to perform whatever sorting/filtering/etc is supported
+        // by the external API.
+        transferRequestsProvider = async req =>
+        {
+            isLoading = true;
+            var query = requests;
+            query =  req.ApplySorting(query);
+
+            var result = await query.ToListAsync();
+            isLoading = false;
+            return GridItemsProviderResult.From(items: result, totalItemCount: result.Count);
+        };
+    }
+
+    async Task<IQueryable<TransferRequest>> getList()
+    {
+        var user = await UserAccessor.GetRequiredUserAsync(HttpContextAccessor.HttpContext!);
+        isAdmin = await UserManager.IsInRoleAsync(user, "admin");
+
+        var res = await Service.GetTransferRequestsAsync(isAdmin ? string.Empty : user.UserName!);
+        return res.AsQueryable();
     }
 
     private void NavigateToDetails(int id)

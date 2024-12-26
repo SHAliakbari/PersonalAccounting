@@ -3,6 +3,7 @@
 @using System.Text
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.EntityFrameworkCore
 @using PersonalAccounting.Domain.Data
 
 @inject UserManager<ApplicationUser> UserManager
@@ -43,6 +44,17 @@
             var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(Code));
             var result = await UserManager.ConfirmEmailAsync(user, code);
             statusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
+
+            if (result.Succeeded)
+            {
+                // Check if this is the first registered user
+                var isFirstUser = await UserManager.Users.CountAsync() == 1;
+                if (isFirstUser)
+                {
+                    // Assign the "admin" role to the first user
+                    await UserManager.AddToRoleAsync(user, "admin");
+                }
+            }
         }
     }
 }

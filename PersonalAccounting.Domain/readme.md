@@ -1,1 +1,1 @@
-dotnet ef migrations add <MigrationName> --project PersonalAccounting.Domain --startup-project PersonalAccounting.BlazorApp 
+dotnet ef migrations add <MigrationName> --project PersonalAccounting.Domain --namespace PersonalAccounting.Domain.Migrations --startup-project PersonalAccounting.BlazorApp --output-dir Migrations

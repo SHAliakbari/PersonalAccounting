@@ -7,7 +7,7 @@ using PersonalAccounting.Domain.Data;
 
 #nullable disable
 
-namespace PersonalAccounting.Domain
+namespace PersonalAccounting.Domain.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -15,7 +15,7 @@ namespace PersonalAccounting.Domain
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -153,8 +153,17 @@ namespace PersonalAccounting.Domain
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AccountNo")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CardNo")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CreateDate")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
@@ -162,6 +171,16 @@ namespace PersonalAccounting.Domain
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("InviteCode")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool?>("IsInviteUsed")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("LockoutEnabled")
@@ -190,12 +209,15 @@ namespace PersonalAccounting.Domain
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Title")
+                    b.Property<string>("TelegramUser")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdateDate")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
@@ -266,6 +288,15 @@ namespace PersonalAccounting.Domain
                     b.Property<DateTime?>("LastEditDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("LastEditUserFullName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastEditUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastEditUserName")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ReceiverAccountNo")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -288,6 +319,9 @@ namespace PersonalAccounting.Domain
 
                     b.Property<string>("ReceiverUserName")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("RequestDate")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("SourceAmount")
@@ -342,6 +376,13 @@ namespace PersonalAccounting.Domain
                     b.Property<string>("CreateUserName")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Thumbnail")
+                        .HasColumnType("BLOB");
 
                     b.Property<int>("TransferRequestId")
                         .HasColumnType("INTEGER");

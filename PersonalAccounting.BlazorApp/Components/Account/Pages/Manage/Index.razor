@@ -28,6 +28,11 @@
                 <label for="phone-number" class="form-label">Phone number</label>
                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
             </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.TelegramUserName" class="form-control" placeholder="Please enter your Telegram userName." />
+                <label for="phone-number" class="form-label">Telegram UserName</label>
+                <ValidationMessage For="() => Input.TelegramUserName" class="text-danger" />
+            </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
         </EditForm>
     </div>
@@ -37,6 +42,7 @@
     private ApplicationUser user = default!;
     private string? username;
     private string? phoneNumber;
+    private string? telegramUserName;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -49,8 +55,10 @@
         user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         username = await UserManager.GetUserNameAsync(user);
         phoneNumber = await UserManager.GetPhoneNumberAsync(user);
+        telegramUserName = user.TelegramUser;
 
         Input.PhoneNumber ??= phoneNumber;
+        Input.TelegramUserName??= telegramUserName;
     }
 
     private async Task OnValidSubmitAsync()
@@ -64,6 +72,12 @@
             }
         }
 
+        if(Input.TelegramUserName != telegramUserName)
+        {
+            user.TelegramUser = Input.TelegramUserName!;
+            await UserManager.UpdateAsync(user);
+        }
+
         await SignInManager.RefreshSignInAsync(user);
         RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
     }
@@ -73,5 +87,8 @@
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }
+
+        [Display(Name = "Telegram UserName")]
+        public string? TelegramUserName { get; set; }
     }
 }

@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using PersonalAccounting.Domain.Data;
 
 namespace PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services
 {
-    public class TransferRequestService
+    public class TransferRequestService : IDisposable
     {
         private readonly ApplicationDbContext _context;
 
@@ -12,11 +13,19 @@ namespace PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services
             _context = context;
         }
 
-        public async Task<List<TransferRequest>> GetTransferRequestsAsync()
+        public void Dispose()
+        {
+            _context?.Dispose();
+        }
+
+        public async Task<List<TransferRequest>> GetTransferRequestsAsync(string userName)
         {
             // Eager loading to include details for initial display
             return await _context.TransferRequests
-                .Include(m => m.Details)
+                .Where(x => userName.IsNullOrEmpty() || x.FromUserName == userName || x.ReceiverUserName == userName || x.ToUserName == userName)
+                //.Include(m => m.Details)
+                .OrderByDescending(x => x.RequestDate)
+                .AsNoTracking()
                 .ToListAsync();
         }
 
@@ -53,11 +62,16 @@ namespace PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services
                     throw; // Re-throw the concurrency exception
                 }
             }
+            catch (Exception e)
+            {
+                throw;
+            }
         }
 
         public async Task DeleteTransferRequestAsync(int id)
         {
-            var TransferRequest = await GetTransferRequestByIdAsync(id);
+            var TransferRequest = await _context.TransferRequests
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (TransferRequest != null)
             {
                 _context.TransferRequests.Remove(TransferRequest);
@@ -112,5 +126,4 @@ namespace PersonalAccounting.BlazorApp.Components.NS_TransferRequest.Services
             return _context.TransferRequestDetails.Any(e => e.Id == id);
         }
     }
-
 }

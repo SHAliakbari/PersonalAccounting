@@ -15,6 +15,7 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
+@inject CustomIdentityService CustomIdentityService;
 
 <PageTitle>Register</PageTitle>
 
@@ -23,7 +24,7 @@
 <h2>Associate your @ProviderDisplayName account.</h2>
 <hr />
 
-<div  class="alert alert-info">
+<div class="alert alert-info">
     You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
     Please enter an email address for this site below and click the Register button to finish
     logging in.
@@ -38,6 +39,11 @@
                 <InputText @bind-Value="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
                 <label for="email" class="form-label">Email</label>
                 <ValidationMessage For="() => Input.Email" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.InviteCode" placeholder="Enter invite code" />
+                <label for="confirm-password">Invite Code</label>
+                <ValidationMessage For="() => Input.InviteCode" class="text-danger" />
             </div>
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </EditForm>
@@ -127,6 +133,14 @@
 
     private async Task OnValidSubmitAsync()
     {
+        var isValidInvite = await CustomIdentityService.ValidateInviteCodeAsync(Input.InviteCode);
+        if (!isValidInvite)
+        {
+            message  = "BadInviteCode";
+            return;
+        }
+
+
         var emailStore = GetEmailStore();
         var user = CreateUser();
 
@@ -191,5 +205,9 @@
         [Required]
         [EmailAddress]
         public string Email { get; set; } = "";
+
+        [Required]
+        [Display(Name = "InviteCode")]
+        public string InviteCode { get; set; } = "";
     }
 }

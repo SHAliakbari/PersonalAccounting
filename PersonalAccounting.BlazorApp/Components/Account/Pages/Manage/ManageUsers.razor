@@ -1,0 +1,244 @@
+﻿@layout AccountLayout
+@page "/Account/Users"
+@rendermode InteractiveServer
+@attribute [Authorize(Policy = "AdminOnly")]
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using PersonalAccounting.Domain.Data;
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityUserAccessor UserAccessor
+
+<div class="container">
+    <h1>User Management</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <button type="button" class="btn btn-primary" @onclick="() => AddUser()">New</button>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in Users)
+                    {
+                        <tr>
+                            <td>@user.UserName</td>
+                            <td>@user.Email</td>
+                            <td>
+                                <button class="btn btn-primary" @onclick="() => EditUser(user)">Edit</button>
+                                <button class="btn btn-danger" @onclick="() => DeleteUser(user)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-md-6">
+
+            <EditForm Model="User" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label for="UserName">Username</label>
+                    <InputText id="UserName" class="form-control" @bind-Value="User.UserName" />
+                </div>
+
+                <div class="form-group">
+                    <label for="Email">Email</label>
+                    <InputText id="Email" class="form-control" @bind-Value="User.Email" />
+                </div>
+
+                <div class="form-group">
+                    <label for="FullName">FullName</label>
+                    <InputText id="FullName" class="form-control" @bind-Value="User.FullName" />
+                </div>
+
+                <div class="form-group">
+                    <label for="AccountNo">AccountNo</label>
+                    <InputText id="AccountNo" class="form-control" @bind-Value="User.AccountNo" />
+                </div>
+
+                <div class="form-group">
+                    <label for="CardNo">CardNo</label>
+                    <InputText id="CardNo" class="form-control" @bind-Value="User.CardNo" />
+                </div>
+              
+                
+
+                <button type="submit" class="btn btn-primary">Save</button>
+            </EditForm>
+            <hr />
+            <div Model="User" OnValidSubmit="HandleSetPassword">
+
+                <div class="form-group">
+                    <label for="Password">Password</label>
+                    <InputText id="Password" class="form-control" type="password" @bind-Value="Password" />
+                </div>
+
+                <div class="form-group">
+                    <label for="ConfirmPassword">Confirm Password</label>
+                    <InputText id="ConfirmPassword" class="form-control" type="password" @bind-Value="ConfirmPassword" />
+                </div>
+                @if (User.CreateDate.HasValue)
+                {
+                    <button type="button" class="btn btn-primary" @onclick="HandleSetPassword">Set Password</button>
+                }
+            </div>
+
+            <div>
+                <ul>
+                    @foreach (var error in Errors)
+                    {
+                        <li>
+                            @error.Description
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    private bool isAdmin = false;
+    private bool editMode = false;
+    private ApplicationUser User { get; set; } = new ApplicationUser();
+    private string Password { get; set; } = string.Empty;
+    private string ConfirmPassword { get; set; } = string.Empty;
+    private List<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
+
+    private List<IdentityError> Errors { get; set; } = new List<IdentityError>();
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // if (HttpContext == null) return;
+        Users = await UserManager.Users.ToListAsync();
+        // var user = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        // isAdmin = HttpContext.User.IsInRole("admin") ;
+        editMode = false;
+    }
+
+    private async Task HandleSubmit()
+    {
+        Errors.Clear();
+
+        if (Password != ConfirmPassword)
+        {
+            Errors = new List<IdentityError>()
+            {
+                new IdentityError { Code = "100" , Description = "Password and confirm password is not match"}
+            };
+            // Handle password mismatch
+            return;
+        }
+
+        IdentityResult result;
+        // Check if the user is new or existing
+        if (!User.CreateDate.HasValue)
+        {
+
+            User.CreateDate = DateTime.UtcNow;
+            result = await UserManager.CreateAsync(User, Password);
+        }
+        else
+        {
+            // Update an existing user
+            User.UpdateDate = DateTime.UtcNow;
+            result = await UserManager.UpdateAsync(User);
+        }
+        if (result.Succeeded)
+        {
+            if (!Users.Contains(User))
+                Users.Add(User);
+            User = new ApplicationUser();
+            Password = ConfirmPassword = string.Empty;
+            editMode = false;
+        }
+        else
+        {
+            // Handle errors
+            Errors = result.Errors.ToList();
+        }
+    }
+
+    private async Task HandleSetPassword()
+    {
+        Errors.Clear();
+
+        if (string.IsNullOrEmpty(Password) || string.IsNullOrEmpty(ConfirmPassword) || Password != ConfirmPassword)
+        {
+            Errors = new List<IdentityError>()
+            {
+                new IdentityError { Code = "100" , Description = "Password and confirm password is not match"}
+            };
+            // Handle password mismatch
+            return;
+        }
+
+        var token = await UserManager.GeneratePasswordResetTokenAsync(User);
+        IdentityResult result = await UserManager.ResetPasswordAsync(User, token, Password);
+
+        if (result.Succeeded)
+        {
+            User.UpdateDate = DateTime.UtcNow;
+            result = await UserManager.UpdateAsync(User);
+        }
+        else
+        {
+            // Handle errors
+            Errors = result.Errors.ToList();
+        }
+
+        if (result.Succeeded)
+        {
+            User = new ApplicationUser();
+            Password = ConfirmPassword = string.Empty;
+            editMode = false;
+        }
+        else
+        {
+            // Handle errors
+            Errors = result.Errors.ToList();
+        }
+    }
+
+    private async Task AddUser()
+    {
+        User = new ApplicationUser();
+        editMode = true;
+    }
+
+    private async Task EditUser(ApplicationUser user)
+    {
+        User = user;
+        editMode = true;
+    }
+
+    private async Task DeleteUser(ApplicationUser user)
+    {
+        Errors.Clear();
+        var result = await UserManager.DeleteAsync(user);
+
+        if (result.Succeeded)
+        {
+            // User deleted successfully
+            Users.Remove(user);
+        }
+        else
+        {
+            Errors = result.Errors.ToList();
+            // Handle errors
+        }
+    }
+}

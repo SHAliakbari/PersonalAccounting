@@ -1,4 +1,8 @@
-﻿@inherits LayoutComponentBase
+﻿@implements IDisposable
+
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+
 
 <div class="page">
     <div class="sidebar">
@@ -7,8 +11,28 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <AuthorizeView>
+                <Authorized>
+                    <div class=" px-3 d-inline">
+                        <a class="" href="Account/Manage">
+                            <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                        </a>
+                    </div>
+                    <div>
+                        <form action="Account/Logout" method="post">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                            <button type="submit" class="btn btn-link">
+                                Logout
+                            </button>
+                        </form>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
         </div>
+
+
+
 
         <article class="content px-4">
             @Body
@@ -21,3 +45,24 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

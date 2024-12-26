@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/PersonalAccounting.BlazorApp/dbfile_backup.back
+/PersonalAccounting.BlazorApp/dbfile_backup.back-shm
+/PersonalAccounting.BlazorApp/dbfile_backup.back-wal

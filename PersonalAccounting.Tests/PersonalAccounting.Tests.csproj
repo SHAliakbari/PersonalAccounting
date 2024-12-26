@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BlazorApp\PersonalAccounting.BlazorApp.csproj" />
+    <ProjectReference Include="..\PersonalAccounting.BlazorApp\PersonalAccounting.BlazorApp.csproj" />
   </ItemGroup>
 
   <ItemGroup>
