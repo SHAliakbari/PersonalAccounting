@@ -168,7 +168,8 @@ app.MigrateDbContext<ApplicationDbContext>(async (context, services) =>
     }
 
     var um = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var admin = await um.FindByEmailAsync("youremail@gmail.com");
+    var masterEmail = Environment.GetEnvironmentVariable($"Authentication_MasterEmail{GlobalConfigs.ProdSuffix}")!;
+    var admin = await um.FindByEmailAsync(masterEmail);
     if (admin != null)
     {
         await um.AddToRoleAsync(admin, "admin");
