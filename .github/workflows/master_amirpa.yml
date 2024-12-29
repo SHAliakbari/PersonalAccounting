@@ -64,10 +64,3 @@ jobs:
           package: .
           startup-command: dotnet "/home/site/wwwroot/PersonalAccounting.BlazorApp.dll"
           target-path: "/home/site/wwwroot/"
-
-      - name: Azure CLI Action
-        uses: Azure/cli@v2.1.0
-        with:
-          inlineScript: az webapp config set --resource-group AmirPersonalAccounting_group --name AmirPA --startup-file /home/site/www/startup.sh
-         
-          
