@@ -9,6 +9,8 @@ using PersonalAccounting.BlazorApp.Services;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using PersonalAccounting.Domain.Services;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -132,7 +134,7 @@ app.UseAntiforgery();
 
 #if DEBUG
 
-await bot.SetWebhookAsync("");
+await bot.SetWebhook("");
 bot.StartReceiving(updateHandler: new Action<ITelegramBotClient, Update, CancellationToken>(OnUpdateFromPolling), errorHandler: async (bot, ex, ct) =>
 {
     await Task.Run(() => Console.WriteLine(ex));
@@ -153,6 +155,8 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 app.UseAuthorization();
+
+RestoreDB(app);
 
 app.MigrateDbContext<ApplicationDbContext>(async (context, services) =>
 {
@@ -213,5 +217,19 @@ async void OnUpdateFromPolling(ITelegramBotClient bot, Update update, Cancellati
     {
         var botService = scope.ServiceProvider.GetService<BotService>()!;
         await botService.HandleMessage(update);
+    }
+}
+
+void RestoreDB(WebApplication app)
+{
+    var fileToRestore = System.IO.Path.Combine(app.Environment.ContentRootPath, "dbfile.db_for_next_start");
+    if (System.IO.File.Exists(fileToRestore))
+    {
+        //restore process 
+        var dbFileName = System.IO.Path.Combine(app.Environment.ContentRootPath, "dbfile.db");
+        var destBackupFileName = System.IO.Path.Combine(app.Environment.ContentRootPath, $"dbfile_Backup_{DateTime.UtcNow.ToString().Replace("/", "_").Replace(":", "_").Replace(" ", "_")}.db");
+        System.IO.File.Copy(dbFileName, destBackupFileName);
+        System.IO.File.Move(fileToRestore, dbFileName, true);
+        System.IO.File.Delete(fileToRestore);
     }
 }

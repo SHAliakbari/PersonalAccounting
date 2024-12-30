@@ -47,34 +47,56 @@ namespace PersonalAccounting.BlazorApp.Services
         {
             if (update.Message is null) return;         // we want only updates about new Message
             if (string.IsNullOrEmpty(update.Message.Chat.Username)) return;
-            //if (update.Message.Text is null) return;    // we want only updates about new Text Message
-            if (update.Message.Text is not null)
+
+            var msg = update.Message;
+            Console.WriteLine($"Received message '{msg.Text ?? msg.Caption}' in {msg.Chat}");
+
+            var users = dbContext.Users.Where(x => x.TelegramUser.ToLower() == msg.Chat.Username!.ToLower());
+            if (users.Count() > 1)
             {
-                var msg = update.Message;
-                Console.WriteLine($"Received message '{msg.Text}' in {msg.Chat}");
-                // let's echo back received text in the chat
+                logger.LogInformation($"User {msg.Chat.Username} duplicate");
+                return;
+            }
+            if (users.Count() == 0)
+            {
+                logger.LogInformation($"User {msg.Chat.Username} not found");
+                return;
+            }
+            ApplicationUser user = users.First();
 
-                var users = dbContext.Users.Where(x => x.TelegramUser.ToLower() == msg.Chat.Username!.ToLower());
-                if (users.Count() > 1)
-                {
-                    logger.LogInformation($"User {msg.Chat.Username} duplicate");
-                    return;
-                }
-                if (users.Count() == 0)
-                {
-                    logger.LogInformation($"User {msg.Chat.Username} not found");
-                    return;
-                }
-                ApplicationUser user = users.First();
-
+            if (update.Message.Caption is not null)
+            {
                 if (await userManager.IsInRoleAsync(user, "admin"))
                 {
-                    if (msg.Text.ToLower().Trim() == "/backup")
+                    if (msg.Caption?.ToLower().Trim() == "/restore" && msg.Document != null)
+                    {
+                        //do the restore preparation
+                        using (var stream = new MemoryStream())
+                        {
+                            var file = await telegramBotClient.GetFile(msg.Document.FileId);
+                            if (file == null || msg.Document.FileName != "dbfile.db")
+                            {
+                                logger.LogInformation($"File can not download");
+                                return;
+                            }
+                            await telegramBotClient.DownloadFile(file.FilePath!, stream);
+                            System.IO.File.WriteAllBytes(System.IO.Path.Combine(webHostEnvironment.ContentRootPath, "dbfile.db_for_next_start"), stream.ToArray());
+                            await telegramBotClient.SendMessage(msg.Chat, "prepared for next start");
+                        }
+                        return;
+                    }
+                }
+            }
+            if (update.Message.Text is not null)
+            {
+                if (await userManager.IsInRoleAsync(user, "admin"))
+                {
+                    if (msg.Text?.ToLower().Trim() == "/backup")
                     {
                         //do the backup
                         string fileName = $"{DateTime.UtcNow.ToString().Replace("/", "_").Replace(":", "_").Replace(" ", "_")}.zip";
                         using MemoryStream fileStream = new MemoryStream(await DownloadZippedFile("dbfile.db", fileName));
-                        await telegramBotClient.MakeRequestAsync(
+                        await telegramBotClient.SendRequest(
                             new Telegram.Bot.Requests.SendDocumentRequest()
                             {
                                 ChatId =  msg.Chat.Id,
@@ -83,6 +105,7 @@ namespace PersonalAccounting.BlazorApp.Services
                             });
                         return;
                     }
+
                     if (msg.Text.ToLower().Trim().StartsWith("/report"))
                     {
                         if (msg.Text.Length <=8)
