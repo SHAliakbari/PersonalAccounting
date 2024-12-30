@@ -64,4 +64,5 @@ jobs:
           package: .
           startup-command: dotnet "/home/site/wwwroot/PersonalAccounting.BlazorApp.dll"
           target-path: "/home/site/wwwroot/"
+          clean: false
           
