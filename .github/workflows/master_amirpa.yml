@@ -62,4 +62,6 @@ jobs:
           app-name: 'AmirPA'
           slot-name: 'Production'
           package: .
+          startup-command: dotnet "/home/site/wwwroot/PersonalAccounting.BlazorApp.dll"
+          target-path: "/home/site/wwwroot/"
           
