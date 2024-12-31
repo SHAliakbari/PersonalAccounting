@@ -228,7 +228,10 @@ void RestoreDB(WebApplication app)
         //restore process 
         var dbFileName = System.IO.Path.Combine(app.Environment.ContentRootPath, "dbfile.db");
         var destBackupFileName = System.IO.Path.Combine(app.Environment.ContentRootPath, $"dbfile_Backup_{DateTime.UtcNow.ToString().Replace("/", "_").Replace(":", "_").Replace(" ", "_")}.db");
-        System.IO.File.Copy(dbFileName, destBackupFileName);
+        if (System.IO.File.Exists(dbFileName))
+        {
+            System.IO.File.Copy(dbFileName, destBackupFileName);
+        }
         System.IO.File.Move(fileToRestore, dbFileName, true);
         System.IO.File.Delete(fileToRestore);
     }
