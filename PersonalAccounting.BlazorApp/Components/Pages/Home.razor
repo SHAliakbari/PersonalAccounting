@@ -9,37 +9,8 @@
 @code {
     private bool _navigationOccurred;
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override Task OnInitializedAsync()
     {
-        if (firstRender && !_navigationOccurred)
-        {
-            _navigationOccurred = true;
-            try
-            {
-                NavigationManager.NavigateTo("/transfers/list", replace: true);
-            }
-            catch (NavigationException)
-            {
-                // Ignore
-            }
-        }
-        base.OnAfterRender(firstRender);
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && !_navigationOccurred)
-        {
-            _navigationOccurred = true;
-            try
-            {
-                NavigationManager.NavigateTo("/transfers/list", replace: true);
-            }
-            catch (NavigationException)
-            {
-                // Ignore
-            }
-        }
-        await base.OnAfterRenderAsync(firstRender);
+        return base.OnInitializedAsync();
     }
 }
