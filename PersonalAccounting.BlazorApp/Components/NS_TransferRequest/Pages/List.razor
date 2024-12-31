@@ -19,11 +19,15 @@
 @inject IdentityUserAccessor UserAccessor
 
 <PageTitle>TransferRequest List</PageTitle>
-<h3>
-    TransferRequest List
-    <InputText type="text" @bind-Value="SearchTerm" />
-    <button type="button btn-sm" @onclick="HandleSearchButton">Filter</button>
-</h3>
+<div>
+    <h3>
+        TransferRequest List
+    </h3>
+    <div>
+        <InputText type="text" @bind-Value="SearchTerm" />
+        <button type="button btn-sm" @onclick="HandleSearchButton">Filter</button>
+    </div>
+</div>
 
 <style>
     .grid {
@@ -51,7 +55,9 @@
 
 @if (isAdmin)
 {
-    <a href="/Transfers/Add" class="btn btn-primary">Add New</a>
+    <div class="text-end">
+        <a href="/Transfers/Add" class="btn btn-primary">Add New</a>
+    </div>
 }
 <br />
 @if (isLoading == true)
@@ -133,7 +139,7 @@ else
         {
             isLoading = true;
             var query = requests;
-            query =  req.ApplySorting(query);
+            query = req.ApplySorting(query);
 
             var result = await query.ToListAsync();
             isLoading = false;

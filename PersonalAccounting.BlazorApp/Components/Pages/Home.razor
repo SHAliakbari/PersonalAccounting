@@ -1,7 +1,45 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+@using PersonalAccounting.BlazorApp.Components.Account
+@inject NavigationManager NavigationManager
 
-<h1>Hello, world!</h1>
+@attribute [StreamRendering]
 
-Welcome to your new app.
+@code {
+    private bool _navigationOccurred;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && !_navigationOccurred)
+        {
+            _navigationOccurred = true;
+            try
+            {
+                NavigationManager.NavigateTo("/transfers/list", replace: true);
+            }
+            catch (NavigationException)
+            {
+                // Ignore
+            }
+        }
+        base.OnAfterRender(firstRender);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_navigationOccurred)
+        {
+            _navigationOccurred = true;
+            try
+            {
+                NavigationManager.NavigateTo("/transfers/list", replace: true);
+            }
+            catch (NavigationException)
+            {
+                // Ignore
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+}
