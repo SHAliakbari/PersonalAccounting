@@ -72,6 +72,30 @@ To get started with PersonalAccounting, follow these steps:
 
     for new migration follow [readme in PersonalAccounting.Domain](PersonalAccounting.Domain/readme.md)
 
+Note : enviroment variables : 
+
+```bash
+"environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Authentication_Google_ClientId": "your_client_id",
+        "Authentication_Google_ClientSecret": "your_client-secret_",
+
+        "Authentication_Telegram_BotToken": "your_telegram_bot",
+        "Authentication_Telegram_BotWebhookUrl": "",
+
+        "EmailConfig_SMTPServer": "smtp.server.com",
+        "EmailConfig_SMTPPort": "587",
+        "EmailConfig_Sender": "your_name_",
+        "EmailConfig_UserName": "username",
+        "EmailConfig_Password": "password",
+
+        "Authentication_MasterEmail": "master_account_@server.com",
+
+        "AZURE_STORAGE_CONNECTION_STRING": "azure_storage_connection_"
+
+      }
+```
+
 ## Contributing
 
 Contributions are welcome! If you'd like to contribute to PersonalAccounting, please follow these guidelines:
