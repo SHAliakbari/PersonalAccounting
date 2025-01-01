@@ -128,6 +128,23 @@ This project is licensed under the [MIT License](LICENSE).
 *   Improved reporting and visualization of financial data.
 *   Improve documentation 
 
+## Detailed Transaction Tracking with Three-Sided Model
+
+PersonalAccounting provides a comprehensive view of your finances with its unique three-sided transaction model. Unlike traditional accounting software focused on sender and receiver, PersonalAccounting incorporates an "exchange" or intermediary party, allowing you to meticulously track complex financial flows.
+
+The "Transfer Request List" above showcases this functionality:
+
+Transaction Overview: 
+![transfer requests](https://github.com/SHAliakbari/PersonalAccounting/blob/master/transfer_requests.png?raw=true)
+
+Each row represents a transfer request (transaction) with essential details:
+
+* Request Date: Date the transfer was initiated.
+* Source and Destination: See who initiated the transfer ("From") and where the funds are going ("To"). This can include individuals, banks, or exchange services ("Exchange 1" in the example).
+* Receiver: Depending on your workflow, this might be the same as the "To" field or the ultimate recipient if the transfer involves multiple intermediaries.
+* Amount and Currency: View the transferred amount with the corresponding currency. Multi-currency support allows you to track transfers involving different currencies, with conversions displayed as needed (e.g., 2000 CAD converted to 100 M-IRR).
+* Status: Track the current stage of the transfer (e.g., "Done").
+
 ## Contact
 
 Email : shaliakbari@gmail.com
