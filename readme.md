@@ -126,8 +126,7 @@ This project is licensed under the [MIT License](LICENSE).
 ## Future Development
 
 *   Improved reporting and visualization of financial data.
-*   Integration with online banking services (potential future feature).
-*   Mobile app support (potential future feature).
+*   Improve documentation 
 
 ## Contact
 
