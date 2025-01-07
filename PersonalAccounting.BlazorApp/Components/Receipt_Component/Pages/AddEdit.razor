@@ -1,0 +1,456 @@
+﻿@page "/Receipts/Add/{id?}"
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.StaticFiles
+@using Microsoft.EntityFrameworkCore
+@using PersonalAccounting.BlazorApp.Components.Account
+@using System.Globalization
+@using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
+@using PersonalAccounting.Domain.Data
+@using System.Security.Claims
+@using PersonalAccounting.Domain.Services
+@using PersonalAccounting.Domain.Services.OCR
+@using SixLabors.ImageSharp
+@using SixLabors.ImageSharp.PixelFormats
+@using SixLabors.ImageSharp.Processing
+@using System.Text.Json
+
+<PageTitle>@(isNew ? "New" : "Edit") Receipt</PageTitle>
+
+@inject ReceiptService Service
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider GetAuthenticationStateAsync
+@inject IWebHostEnvironment Environment
+@inject ILogger<AddEdit> logger;
+@inject IJSRuntime _js;
+@inject BlobService blobService
+@inject FormRecognizerService formRecognizerService;
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor;
+@inject IdentityUserAccessor UserAccessor
+
+<script type="text/javascript">
+    async function viewFileFromStream(fileName, contentStreamReference, mimeType) {
+        window.URL = window.URL || window.webkitURL;
+
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+
+        const anchorElement = document.createElement('a');
+        document.body.appendChild(anchorElement);
+
+        anchorElement.setAttribute("type", "hidden");
+        anchorElement.href = url;
+        anchorElement.target = "_blank";
+        anchorElement.click();
+
+        anchorElement.remove();
+        window.URL.revokeObjectURL(url);
+    };
+
+    async function viewFileFromUrl(url) {
+        window.URL = window.URL || window.webkitURL;
+
+        const anchorElement = document.createElement('a');
+        anchorElement.setAttribute("type", "hidden");
+        anchorElement.href = url;
+        anchorElement.target = "_blank";
+
+        document.body.appendChild(anchorElement);
+        anchorElement.click();
+        anchorElement.remove();
+    };
+</script>
+<style>
+    .details .detail {
+        border: 1px solid gray;
+    }
+
+    .grid {
+        margin-top: 5px;
+    }
+
+        .grid .details {
+            width: 100%;
+        }
+
+            .grid .details td, .grid .details th {
+                border: 1px solid gray;
+            }
+
+            /* Stripe effect */
+            .grid .details tbody tr {
+                background-color: rgba(0,0,0,0.04);
+            }
+
+                .grid .details tbody tr:nth-child(even) {
+                    background: rgba(255,255,255,0.4);
+                }
+
+                .grid .details tbody tr.selectedRow {
+                    background-color: forestgreen;
+                }
+
+    .detailSection {
+        border: 1px solid gray;
+        margin: 10px;
+    }
+
+</style>
+@if (isNew)
+{
+    <h1>Add Receipt</h1>
+}
+else
+{
+    <h1>Edit/View Receipt</h1>
+}
+
+<div>
+    <EditForm Model="master" OnValidSubmit="HandleSubmit" method="post" FormName="registerReceipt">
+        <DataAnnotationsValidator />
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="form-floating mb-3">
+                    <InputDate disabled="@(!isAdmin)" @bind-Value="master.Date" class="form-control" aria-required="true" />
+                    <label for="Date">Receipt Date</label>
+                    <ValidationMessage For="() => master.Date" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.MerchantName" class=@{
+                               $" form-control"
+                               } aria-required="true" placeholder="Freshco, ..." />
+                    <label for="MerchantName">MerchantName</label>
+                    <ValidationMessage For="() => master.MerchantName" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.Category" class=@{
+                               $" form-control"
+                               } aria-required="true" placeholder="Meat, Fruits, ..." />
+                    <label for="Category">Category</label>
+                    <ValidationMessage For="() => master.Category" class="text-danger" />
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="form-floating mb-3">
+                    <InputNumber @bind-Value="master.TotalAmount" @oninput="(ChangeEventArgs e) => { master.TotalAmount = string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse((e.Value.ToString())); }" class="form-control" aria-required="true" />
+                    <label for="TotalAmount">TotalAmount</label>
+                    <ValidationMessage For="() => master.TotalAmount" class="text-danger" />
+                </div>
+                <div class="form-floating mb-3">
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.PaidByUserName" class=@{
+                               $" form-control"
+                               } aria-required="true" placeholder="Meat, Fruits, ..." />
+                    <label for="PayedByUserName">PaidByUserName</label>
+                    <ValidationMessage For="() => master.PaidByUserName" class="text-danger" />
+                </div>
+
+            </div>
+        </div>
+        <ValidationSummary />
+        <div class="form-group">
+            <label>Receipt File:</label>
+            <InputFile OnChange="LoadFiles" />
+            @uploadStatus
+            <button type="button" class="btn btn-secondary btn-lg" @onclick="preProcessImageFile">Pre-process image file</button>
+        </div>
+
+        <hr />
+        @if (master.Items.Any())
+        {
+            <h2>Details</h2>
+            <div class="text-start">
+                <button type="button" @onclick="NewDetail" class="btn btn-success btn-sm">
+                    New Detail
+                </button>
+            </div>
+            <div class="grid">
+                <table class="details">
+                    <thead>
+                        <tr>
+                            <td>#</td>
+                            <td>Description</td>
+                            <td>TotalPrice</td>
+                            <td></td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var detail in master.Items)
+                        {
+                            <tr class="@getRowClass(detail)">
+                                <td></td>
+                                <td>@detail.Description</td>
+                                <td>@detail.TotalPrice</td>
+                                <td>
+                                    <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteDetail(detail)">Delete</button>
+                                    <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
+                                </td>
+                            </tr>
+
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <div class="detailSection">
+            <h4>@(isDetailNew ? "Add New Detail" : "Edit Detail")</h4>
+            <div class="row">
+                <div class="form-group col-md-4">
+                    <label for="Description">Description:</label>
+                    <InputText required @bind-Value="detail.Description" class=@{
+                               $" form-control"
+                               } aria-required="true" placeholder="Banana, Pineapple, ..." />
+                    <ValidationMessage For="() => detail.Description" class="text-danger" />
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="TotalPrice">TotalPrice:</label>
+                    <InputNumber required @bind-Value="detail.TotalPrice" class=@{
+                                 $"form-control"
+                                 } aria-required="true" placeholder="" />
+                    <ValidationMessage For="() => detail.TotalPrice" class="text-danger" />
+                </div>
+                @if (isDetailNew)
+                {
+                    <div class="text-end">
+                        <button type="button" @onclick="HandleDetailSubmit" class="btn btn-success">Add Detail</button>
+                    </div>
+                }
+            </div>
+        </div>
+        <hr />
+        <div class="text-end">
+            @if (isAdmin)
+            {
+                <button type="submit" class="btn btn-primary btn-lg">Save Receipt</button>
+            }
+        </div>
+
+    </EditForm>
+</div>
+
+@code {
+    private Receipt master { get; set; } = default!; // Initialize with default value
+    private ReceiptItem detail = new ReceiptItem();
+    private bool isDetailNew = true;
+    private List<ApplicationUser> users;
+
+    private string PaidUserClassName = string.Empty;
+
+
+    private bool isNew { get; set; }
+
+    string uploadStatus = "";
+
+    [Parameter]
+    public string id { get; set; }
+
+    ApplicationUser user;
+    string name;
+    bool isAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserAccessor.GetRequiredUserAsync(HttpContextAccessor.HttpContext);
+        name = user.UserName;
+        isAdmin = await UserManager.IsInRoleAsync(user, "admin");
+
+        // if (isAdmin)
+        {
+            users = await UserManager.Users.ToListAsync();
+        }
+
+        isNew = string.IsNullOrEmpty(this.id);
+        if (isNew)
+        {
+            master = new Receipt(); // Create new instance
+        }
+        else
+        {
+            await LoadMaster(int.Parse(id));
+        }
+    }
+
+    private string getRowClass(ReceiptItem detail)
+    {
+        if (this.detail.Id == detail.Id && this.detail.Description == detail.Description)
+        {
+            return "selectedRow";
+        }
+        return "";
+    }
+
+    private void FillPayedByUserInformation(FocusEventArgs e)
+    {
+        if (master.PaidByUserId != null)
+        {
+            var user = users.FirstOrDefault(x => x.Email == master.PaidByUserName);
+            if (user != null)
+            {
+                master.PaidByUserFullName = user.FullName;
+                master.PaidByUserId = user.Id;
+                PaidUserClassName = "border border-success";
+                return;
+            }
+        }
+        PaidUserClassName = "border border-danger";
+        master.PaidByUserFullName = string.Empty;
+        master.PaidByUserId = string.Empty;
+    }
+
+    // private async Task OpenFile(TransferRequestDetail detail)
+    // {
+    //     var content = await blobService.Download(detail.FileName);
+
+    //     MemoryStream stream = new MemoryStream(content);
+    //     stream.Position = 0;
+    //     using var streamRef = new DotNetStreamReference(stream);
+    //     await _js.InvokeVoidAsync("viewFileFromStream", detail.FileName, streamRef, GetMimeTypeForFileExtension(detail.FileName));
+    // }
+
+    private async Task preProcessImageFile()
+    {
+        var file = await blobService.Download(master.ImageFileName);
+
+        using (var stream = new MemoryStream(file))
+        {
+            // MemoryStream finalizedImage = new MemoryStream();
+            // ImagePreprocessor.PreprocessImage(stream, ref finalizedImage);
+            // var content = service.ExtractTextFromImage(finalizedImage.ToArray());
+
+            uploadStatus = "Processing";
+            master = await formRecognizerService.ExtractReceiptInfo(stream);
+            uploadStatus = "Processed . Check the form info";
+        }
+    }
+
+    public string GetMimeTypeForFileExtension(string filePath)
+    {
+        const string DefaultContentType = "application/octet-stream";
+
+        var provider = new FileExtensionContentTypeProvider();
+
+        if (!provider.TryGetContentType(filePath, out string contentType))
+        {
+            contentType = DefaultContentType;
+        }
+
+        return contentType;
+    }
+
+    private void NewDetail()
+    {
+        detail = new ReceiptItem();
+        isDetailNew = true;
+    }
+
+    private void DeleteDetail(ReceiptItem detail)
+    {
+        if (!master.Items.Remove(detail))
+        {
+            logger.LogError("Could not remove detail {details}", JsonSerializer.Serialize(detail));
+            return;
+        }
+        NewDetail();
+    }
+
+    private void EditDetail(ReceiptItem detail)
+    {
+        this.detail = detail;
+        isDetailNew = false;
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            long maxFileSize = 1024L * 1024L * 1024L * 2L;
+            var file = e.File;
+            // if (files.Count > 0)
+            {
+                uploadStatus = "uploading";
+                // foreach (var file in files)
+                // {
+                using var memoryStream = new MemoryStream();
+                await file.OpenReadStream(maxFileSize).CopyToAsync(memoryStream);
+
+                byte[]? thumbnail = null;
+                var fileType = Path.GetExtension(file.Name);
+                if (fileType.EndsWith("jpg")
+                || fileType.EndsWith("jpeg")
+                || fileType.EndsWith("png"))
+                {
+                    thumbnail = GetReducedImage(256, 256, memoryStream);
+                    // if (thumbnail != null)
+                    //     thumbnail.Save(thumbnailStream, System.Drawing.Imaging.ImageFormat.Png);
+                }
+                var fileName = await blobService.Upload(file.Name, memoryStream.ToArray());
+
+                master.Thumbnail = thumbnail;
+                master.ImageFileName = fileName;
+                // }
+
+                uploadStatus = "File is ready to Save";
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Upload Method");
+            throw;
+        }
+    }
+
+    private byte[]? GetReducedImage(int width, int height, Stream resourceImage)
+    {
+        try
+        {
+            resourceImage.Seek(0, SeekOrigin.Begin);
+            using MemoryStream memoryStream = new MemoryStream();
+            using (Image image = Image.Load(resourceImage))
+            {
+                image.Mutate(x => x
+                     .Resize(width, height)
+                     .Grayscale());
+                image.Save(memoryStream, SixLabors.ImageSharp.Formats.Png.PngFormat.Instance); // Automatic encoder selected based on extension.
+            }
+
+            return memoryStream.ToArray();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "GetReducedImage");
+            return null;
+        }
+    }
+
+    private async Task LoadMaster(int id)
+    {
+        master = await Service.GetReceiptById(id);
+    }
+
+    public async Task HandleSubmit(EditContext editContext)
+    {
+        if (master.Id == 0) // New master
+        {
+            await Service.AddReceipt(master);
+        }
+        else // Existing master
+        {
+            await Service.UpdateReceipt(master);
+        }
+        Navigation.NavigateTo("/Receipts/List");
+    }
+
+    private async Task HandleDetailSubmit()
+    {
+        if (detail.Id == 0)
+        {
+            master.Items.Add(detail);
+            NewDetail();
+        }
+    }
+}

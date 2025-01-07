@@ -25,6 +25,9 @@ namespace PersonalAccounting.Domain.Data
         public DbSet<TransferRequest> TransferRequests { get; set; }
         public DbSet<TransferRequestDetail> TransferRequestDetails { get; set; }
 
+        public DbSet<Receipt> Receipts { get; set; }
+        public DbSet<ReceiptItem> ReceiptItems { get; set; }
+
         public override void Dispose()
         {
             base.Dispose();
@@ -42,6 +45,12 @@ namespace PersonalAccounting.Domain.Data
                 .HasOne(d => d.TransferRequest)
                 .WithMany(m => m.Details)
                 .HasForeignKey(d => d.TransferRequestId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ReceiptItem>()
+                .HasOne(d => d.Receipt)
+                .WithMany(m => m.Items)
+                .HasForeignKey(d => d.ReceiptId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

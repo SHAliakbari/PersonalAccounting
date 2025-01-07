@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PersonalAccounting.Domain.Data;
 
@@ -10,9 +11,11 @@ using PersonalAccounting.Domain.Data;
 namespace PersonalAccounting.Domain.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250104172900_receipts_migration")]
+    partial class receipts_migration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
@@ -245,10 +248,6 @@ namespace PersonalAccounting.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("CreateDate")
                         .HasColumnType("TEXT");
 
@@ -287,20 +286,17 @@ namespace PersonalAccounting.Domain.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PaidByUserFullName")
+                    b.Property<string>("PayedByUserFullName")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PaidByUserId")
+                    b.Property<string>("PayedByUserId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PaidByUserName")
+                    b.Property<string>("PayedByUserName")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<byte[]>("Thumbnail")
-                        .HasColumnType("BLOB");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("TEXT");

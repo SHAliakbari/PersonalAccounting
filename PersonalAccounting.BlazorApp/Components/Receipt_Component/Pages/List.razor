@@ -1,0 +1,163 @@
+﻿@page "/Receipts/List"
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using PersonalAccounting.BlazorApp.Components.Account
+@using PersonalAccounting.Domain.Data
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using System.Text.Json
+@using System.Globalization
+@rendermode InteractiveServer
+
+@attribute [Authorize]
+@attribute [StreamRendering]
+
+@inject PersonalAccounting.BlazorApp.Components.Receipt_Component.Services.ReceiptService Service
+@inject NavigationManager NavigationManager
+@inject UserManager<ApplicationUser> UserManager
+@inject IHttpContextAccessor HttpContextAccessor;
+@inject ILogger<List> logger;
+@inject IdentityUserAccessor UserAccessor
+
+<PageTitle>Receipts List</PageTitle>
+<div>
+    <h3>
+        Receipts List
+    </h3>
+    <div>
+        <InputText type="text" @bind-Value="SearchTerm" />
+        <button type="button btn-sm" @onclick="HandleSearchButton">Filter</button>
+    </div>
+</div>
+
+<style>
+    .grid {
+        margin-top: 5px;
+    }
+
+        .grid .transfersList {
+            width: 100%;
+        }
+
+            .grid .transfersList td, .grid .transfersList th {
+                border: 1px solid gray;
+            }
+
+            /* Stripe effect */
+            .grid .transfersList tbody tr {
+                background-color: rgba(0,0,0,0.04);
+            }
+
+                .grid .transfersList tbody tr:nth-child(even) {
+                    background: rgba(255,255,255,0.4);
+                }
+
+</style>
+
+@if (isAdmin)
+{
+    <div class="text-end">
+        <a href="/Receipts/Add" class="btn btn-primary">Add New</a>
+    </div>
+}
+<br />
+@if (isLoading == true)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="grid" tabindex="-1">
+
+        <QuickGrid TGridItem="Receipt" Items="@requests" Class="receiptsList">
+            <TemplateColumn Title="Receipt Date">
+                <div>
+                    <div>@context.Date</div>
+                </div>
+            </TemplateColumn>
+            <PropertyColumn Property="@(c => c.Category)" Sortable="true" Title="MerchantName" />
+            <PropertyColumn Property="@(c => c.MerchantName)" Sortable="true" Title="MerchantName" />
+            <PropertyColumn Property="@(c => c.TotalAmount)" Sortable="true" Title="TotalAmount" />
+            <PropertyColumn Property="@(c => c.PaidByUserFullName)" Sortable="true" Title="PayedByUserFullName" />
+            <TemplateColumn Title="Actions">
+                <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+            </TemplateColumn>
+        </QuickGrid>
+    </div>
+}
+
+@code {
+    string SearchTerm = "";
+    GridItemsProvider<Receipt>? receiptsProvider;
+    private bool isLoading = false;
+    IQueryable<Receipt>? requests;
+
+    bool isAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        requests = await getList();
+        InitList();
+    }
+
+    private string FormatCurrecny(decimal amount, string currency)
+    {
+        if (amount > 1000000)
+        {
+            amount /= 1000000;
+            currency = "M-" + currency;
+            return $"{amount.ToString("##,##.##")} {currency}";
+        }
+        return $"{amount.ToString("##,##")} {currency}";
+    }
+
+    async Task HandleSearchButton()
+    {
+        requests = await getList();
+        requests = requests.Where(x =>
+            x.MerchantName.Contains(SearchTerm) ||
+            x.Category.Contains(SearchTerm) ||
+            x.PaidByUserFullName.Contains(SearchTerm) ||
+            x.Date.ToString().Contains(SearchTerm)
+        );
+        InitList();
+    }
+
+    private void InitList()
+    {
+        // Define the GridItemsProvider. Its job is to convert QuickGrid's GridItemsProviderRequest into a query against
+        // an arbitrary data soure. In this example, we need to translate query parameters into the particular URL format
+        // supported by the external JSON API. It's only possible to perform whatever sorting/filtering/etc is supported
+        // by the external API.
+        receiptsProvider = async req =>
+        {
+            isLoading = true;
+            var query = requests;
+            query = req.ApplySorting(query);
+
+            var result = await query.ToListAsync();
+            isLoading = false;
+            return GridItemsProviderResult.From(items: result, totalItemCount: result.Count);
+        };
+    }
+
+    async Task<IQueryable<Receipt>> getList()
+    {
+        var user = await UserAccessor.GetRequiredUserAsync(HttpContextAccessor.HttpContext!);
+        isAdmin = await UserManager.IsInRoleAsync(user, "admin");
+
+        var res = await Service.GetAllReceipts();
+        return res.AsQueryable();
+    }
+
+    private void NavigateToDetails(int id)
+    {
+        // Use navigation manager to redirect to details page
+        NavigationManager.NavigateTo($"/Receipts/Add/{id}");
+    }
+
+    private void NavigateToAdd()
+    {
+        // Use navigation manager to redirect to details page
+        NavigationManager.NavigateTo($"/Receipts/Add");
+    }
+}

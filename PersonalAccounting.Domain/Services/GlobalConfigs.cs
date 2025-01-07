@@ -1,4 +1,4 @@
-﻿namespace PersonalAccounting.BlazorApp.Services
+﻿namespace PersonalAccounting.Domain.Services
 {
     public static class GlobalConfigs
     {

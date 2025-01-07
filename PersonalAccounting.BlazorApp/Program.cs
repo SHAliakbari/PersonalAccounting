@@ -11,6 +11,8 @@ using Telegram.Bot.Types;
 using PersonalAccounting.Domain.Services;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
+using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services;
+using PersonalAccounting.Domain.Services.OCR;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +21,33 @@ var configuration = builder.Configuration;
 
 builder.Logging.AddAzureWebAppDiagnostics();
 
+//var ocrService = new OCRService(builder.Environment);
+
+//List<string> inputImages = new List<string>
+//{
+//    @"D:\freshco.jpg",
+//    @"D:\BulkBarn.jpg",
+//    @"D:\shoppers.jpg"
+//};
+
+//foreach (var input in inputImages)
+//{
+//    var templateName = System.IO.Path.GetFileNameWithoutExtension(input);
+//    var path = System.IO.Path.GetPathRoot(input);
+//    using (var stream = new MemoryStream(System.IO.File.ReadAllBytes(input)))
+//    {
+//        await FormRecognizerService.RunAsync(stream, templateName);
+
+//        //MemoryStream finalizedImage = new MemoryStream();
+//        //ImagePreprocessor.PreprocessImage(stream, ref finalizedImage);
+//        //System.IO.File.WriteAllBytes($"{path}{templateName}_new.jpg", finalizedImage.ToArray());
+//        //var content = ocrService.ExtractTextFromImage(finalizedImage.ToArray());
+//        //System.IO.File.WriteAllText($"{path}{templateName}.txt", content);
+
+//        //var rec = ocrService.FillTheReceipt(content);
+
+//    }
+//}
 
 
 var token = Environment.GetEnvironmentVariable($"Authentication_Telegram_BotToken{GlobalConfigs.ProdSuffix}");             // set your bot token in appsettings.json
@@ -105,6 +134,9 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
     .AddDefaultTokenProviders();
 
 builder.Services.AddScoped<TransferRequestService>();
+builder.Services.AddScoped<ReceiptService>();
+
+builder.Services.AddScoped<FormRecognizerService>();
 
 using var cts = new CancellationTokenSource();
 var bot = new TelegramBotClient(token, cancellationToken: cts.Token);
