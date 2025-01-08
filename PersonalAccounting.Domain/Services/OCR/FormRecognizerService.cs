@@ -40,7 +40,7 @@ namespace PersonalAccounting.Domain.Services.OCR
             {
                 if (document.Fields.TryGetValue("MerchantName", out var merchantNameField))
                 {
-                    receipt.MerchantName = merchantNameField.Value.AsString();
+                    receipt.ShopName = receipt.MerchantName = merchantNameField.Value.AsString();
                     //log.LogInformation($"Merchant Name: {merchantName}");
                 }
 
@@ -54,10 +54,16 @@ namespace PersonalAccounting.Domain.Services.OCR
                             var fields = row.Value.AsDictionary();
                             ReceiptItem item = new ReceiptItem();
 
+                            if (fields.ContainsKey("ProductCode")) item.ProductCode = fields["ProductCode"].Content;
+
                             if (fields.ContainsKey("Description")) item.Description = fields["Description"].Content;
+                            if (fields.ContainsKey("QuantityUnit")) item.QuantityUnit = fields["QuantityUnit"].Content;
                             if (fields.ContainsKey("Price")) item.UnitPrice = (decimal)fields["Price"].Value.AsDouble();
-                            if (fields.ContainsKey("Quantity")) item.Quantity = (decimal)fields["Quantity"].Value.AsDouble();
-                            if (fields.ContainsKey("Quantity")) item.Quantity = (decimal)fields["Quantity"].Value.AsDouble();
+                            if (fields.ContainsKey("Quantity"))
+                                item.Quantity = (decimal)fields["Quantity"].Value.AsDouble();
+                            else
+                                item.Quantity = 1;
+                            if (fields.ContainsKey("UnitPrice")) item.UnitPrice = (decimal)fields["UnitPrice"].Value.AsDouble();
                             if (fields.ContainsKey("TotalPrice")) item.TotalPrice = (decimal)fields["TotalPrice"].Value.AsDouble();
 
                             receipt.Items.Add(item);

@@ -92,7 +92,7 @@
                 }
 
                 .grid .details tbody tr.selectedRow {
-                    background-color: forestgreen;
+                    /* background-color: forestgreen; */
                 }
 
     .detailSection {
@@ -128,11 +128,11 @@ else
                     <ValidationMessage For="() => master.MerchantName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText disabled="@(!isAdmin)" @bind-Value="master.Category" class=@{
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.ShopName" class=@{
                                $" form-control"
-                               } aria-required="true" placeholder="Meat, Fruits, ..." />
-                    <label for="Category">Category</label>
-                    <ValidationMessage For="() => master.Category" class="text-danger" />
+                               } aria-required="true" placeholder="Shoppers, Freshco, ..." />
+                    <label for="ShopName">ShopName</label>
+                    <ValidationMessage For="() => master.ShopName" class="text-danger" />
                 </div>
             </div>
             <div class="col-sm-6">
@@ -156,6 +156,10 @@ else
             <label>Receipt File:</label>
             <InputFile OnChange="LoadFiles" />
             @uploadStatus
+            @if (master.Thumbnail != null)
+            {
+                    <img @ondblclick="() => OpenFile(master)" width="100" height="100" src="data:image;base64, @System.Convert.ToBase64String(master.Thumbnail)" />
+            }
             <button type="button" class="btn btn-secondary btn-lg" @onclick="preProcessImageFile">Pre-process image file</button>
         </div>
 
@@ -173,7 +177,11 @@ else
                     <thead>
                         <tr>
                             <td>#</td>
+                            <td>Category</td>
                             <td>Description</td>
+                            <td>Quantity</td>
+                            <td>QuantityUnit</td>
+                            <td>UnitPrice</td>
                             <td>TotalPrice</td>
                             <td></td>
                         </tr>
@@ -182,13 +190,144 @@ else
                         @foreach (var detail in master.Items)
                         {
                             <tr class="@getRowClass(detail)">
-                                <td></td>
-                                <td>@detail.Description</td>
-                                <td>@detail.TotalPrice</td>
-                                <td>
-                                    <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteDetail(detail)">Delete</button>
-                                    <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
-                                </td>
+                                @if (getRowClass(detail) == "selectedRow")
+                                {
+                                    <td colspan="8">
+                                        <div class="detailSection">
+                                            <h4>@(isDetailNew ? "Add New Detail" : "Edit Detail")</h4>
+                                            <div class="row">
+                                                <div class="form-group col-md-3">
+                                                    <label for="Category">Category:</label>
+                                                    <InputSelect @bind-Value="detail.Category" class="form-control" aria-required="true" placeholder="">
+                                                        <optgroup label="Grocery">
+                                                            <option value="Grocery/Produce (Fruits and Vegetables)">Produce (Fruits and Vegetables)</option>
+                                                            <option value="Grocery/Dairy & Eggs">Dairy & Eggs</option>
+                                                            <option value="Grocery/Meat & Seafood">Meat & Seafood</option>
+                                                            <option value="Grocery/Bakery">Bakery</option>
+                                                            <option value="Grocery/Pantry (Dry goods, canned goods)">Pantry (Dry goods, canned goods)</option>
+                                                            <option value="Grocery/Frozen Foods">Frozen Foods</option>
+                                                            <option value="Grocery/Beverages">Beverages</option>
+                                                            <option value="Grocery/Snacks">Snacks</option>
+                                                        </optgroup>
+                                                        <optgroup label="Restaurant/Dining">
+                                                            <option value="Restaurant/Dining/Restaurant Meal">Restaurant Meal</option>
+                                                            <option value="Restaurant/Dining/Cafe/Coffee Shop">Cafe/Coffee Shop</option>
+                                                            <option value="Restaurant/Dining/Fast Food">Fast Food</option>
+                                                            <option value="Restaurant/Dining/Bar/Pub">Bar/Pub</option>
+                                                            <option value="Restaurant/Dining/Delivery/Takeout">Delivery/Takeout</option>
+                                                        </optgroup>
+                                                        <optgroup label="Transportation">
+                                                            <option value="Transportation/Fuel/Gas">Fuel/Gas</option>
+                                                            <option value="Transportation/Public Transportation (Bus, Train, Subway)">Public Transportation (Bus, Train, Subway)</option>
+                                                            <option value="Transportation/Taxi/Ride-hailing">Taxi/Ride-hailing</option>
+                                                            <option value="Transportation/Parking">Parking</option>
+                                                            <option value="Transportation/Tolls">Tolls</option>
+                                                        </optgroup>
+                                                        <optgroup label="Retail/Shopping">
+                                                            <option value="Retail/Shopping/Clothing">Clothing</option>
+                                                            <option value="Retail/Shopping/Electronics">Electronics</option>
+                                                            <option value="Retail/Shopping/Books & Stationery">Books & Stationery</option>
+                                                            <option value="Retail/Shopping/Home Goods">Home Goods</option>
+                                                            <option value="Retail/Shopping/Gifts & Toys">Gifts & Toys</option>
+                                                            <option value="Retail/Shopping/Pharmacy/Drugstore">Pharmacy/Drugstore</option>
+                                                            <option value="Retail/Shopping/Hardware/Home Improvement">Hardware/Home Improvement</option>
+                                                        </optgroup>
+                                                        <optgroup label="Household">
+                                                            <option value="Household/Utilities (Electricity, Gas, Water)">Utilities (Electricity, Gas, Water)</option>
+                                                            <option value="Household/Rent/Mortgage">Rent/Mortgage</option>
+                                                            <option value="Household/Home Maintenance">Home Maintenance</option>
+                                                            <option value="Household/Cleaning Supplies">Cleaning Supplies</option>
+                                                            <option value="Household/Furniture">Furniture</option>
+                                                            <option value="Household/Home Decor">Home Decor</option>
+                                                        </optgroup>
+                                                        <optgroup label="Entertainment">
+                                                            <option value="Entertainment/Movies">Movies</option>
+                                                            <option value="Entertainment/Concerts/Shows">Concerts/Shows</option>
+                                                            <option value="Entertainment/Sports Events">Sports Events</option>
+                                                            <option value="Entertainment/Games">Games</option>
+                                                            <option value="Entertainment/Other Entertainment">Other Entertainment</option>
+                                                        </optgroup>
+                                                        <optgroup label="Travel">
+                                                            <option value="Travel/Flights">Flights</option>
+                                                            <option value="Travel/Hotels">Hotels</option>
+                                                            <option value="Travel/Car Rentals">Car Rentals</option>
+                                                            <option value="Travel/Train Travel">Train Travel</option>
+                                                            <option value="Travel/Other Travel Expenses">Other Travel Expenses</option>
+                                                        </optgroup>
+                                                        <optgroup label="Personal Care">
+                                                            <option value="Personal Care/Haircuts/Salon">Haircuts/Salon</option>
+                                                            <option value="Personal Care/Cosmetics/Toiletries">Cosmetics/Toiletries</option>
+                                                            <option value="Personal Care/Spa Treatments">Spa Treatments</option>
+                                                            <option value="Personal Care/Gym/Fitness">Gym/Fitness</option>
+                                                        </optgroup>
+                                                        <optgroup label="Medical/Healthcare">
+                                                            <option value="Medical/Healthcare/Doctor Visits">Doctor Visits</option>
+                                                            <option value="Medical/Healthcare/Prescriptions">Prescriptions</option>
+                                                            <option value="Medical/Healthcare/Medical Supplies">Medical Supplies</option>
+                                                            <option value="Medical/Healthcare/Dental Care">Dental Care</option>
+                                                            <option value="Medical/Healthcare/Vision Care">Vision Care</option>
+                                                        </optgroup>
+                                                        <optgroup label="Other">
+                                                            <option value="Other/Other">Other</option>
+                                                        </optgroup>
+                                                    </InputSelect>
+                                                    <ValidationMessage For="() => detail.Description" class="text-danger" />
+                                                </div>
+                                                <div class="form-group col-md-3">
+                                                    <label for="Description">Description:</label>
+                                                    <InputText required @bind-Value="detail.Description" class=@{
+                                                   $" form-control"
+                                                   } aria-required="true" placeholder="Banana, Pineapple, ..." />
+                                                    <ValidationMessage For="() => detail.Description" class="text-danger" />
+                                                </div>
+                                                <div class="form-group col-md-2">
+                                                    <label for="Quantity">Quantity:</label>
+                                                    <InputNumber required @bind-Value="detail.Quantity" class=@{
+                                                     $"form-control"
+                                                     } aria-required="true" placeholder="" />
+                                                    <ValidationMessage For="() => detail.Quantity" class="text-danger" />
+                                                </div>
+                                                <div class="form-group col-md-2">
+                                                    <label for="UnitPrice">UnitPrice:</label>
+                                                    <InputNumber required @bind-Value="detail.UnitPrice" class=@{
+                                                     $"form-control"
+                                                     } aria-required="true" placeholder="" />
+                                                    <ValidationMessage For="() => detail.UnitPrice" class="text-danger" />
+                                                </div>
+                                                <div class="form-group col-md-2">
+                                                    <label for="TotalPrice">TotalPrice:</label>
+                                                    <InputNumber required @bind-Value="detail.TotalPrice" class=@{
+                                                     $"form-control"
+                                                     } aria-required="true" placeholder="" />
+                                                    <ValidationMessage For="() => detail.TotalPrice" class="text-danger" />
+                                                </div>
+                                                @if (isDetailNew)
+                                                {
+                                                    <div class="text-end">
+                                                        <button type="button" @onclick="HandleDetailSubmit" class="btn btn-success">Add Detail</button>
+                                                    </div>
+                                                }
+                                                <div class="text-end">
+                                                    <button type="button" @onclick="NewDetail" class="btn btn-danger">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td></td>
+                                    <td>@detail.Category</td>
+                                    <td>@detail.Description</td>
+                                    <td>@detail.Quantity</td>
+                                    <td>@detail.QuantityUnit</td>
+                                    <td>@detail.UnitPrice</td>
+                                    <td>@detail.TotalPrice</td>
+                                    <td>
+                                        <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteDetail(detail)">Delete</button>
+                                        <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
+                                    </td>
+                                }
                             </tr>
 
                         }
@@ -197,31 +336,10 @@ else
             </div>
         }
 
-        <div class="detailSection">
-            <h4>@(isDetailNew ? "Add New Detail" : "Edit Detail")</h4>
-            <div class="row">
-                <div class="form-group col-md-4">
-                    <label for="Description">Description:</label>
-                    <InputText required @bind-Value="detail.Description" class=@{
-                               $" form-control"
-                               } aria-required="true" placeholder="Banana, Pineapple, ..." />
-                    <ValidationMessage For="() => detail.Description" class="text-danger" />
-                </div>
-                <div class="form-group col-md-4">
-                    <label for="TotalPrice">TotalPrice:</label>
-                    <InputNumber required @bind-Value="detail.TotalPrice" class=@{
-                                 $"form-control"
-                                 } aria-required="true" placeholder="" />
-                    <ValidationMessage For="() => detail.TotalPrice" class="text-danger" />
-                </div>
-                @if (isDetailNew)
-                {
-                    <div class="text-end">
-                        <button type="button" @onclick="HandleDetailSubmit" class="btn btn-success">Add Detail</button>
-                    </div>
-                }
-            </div>
-        </div>
+       @{
+           
+         
+        }
         <hr />
         <div class="text-end">
             @if (isAdmin)
@@ -302,15 +420,15 @@ else
         master.PaidByUserId = string.Empty;
     }
 
-    // private async Task OpenFile(TransferRequestDetail detail)
-    // {
-    //     var content = await blobService.Download(detail.FileName);
+    private async Task OpenFile(Receipt receipt)
+    {
+        var content = await blobService.Download(receipt.ImageFileName);
 
-    //     MemoryStream stream = new MemoryStream(content);
-    //     stream.Position = 0;
-    //     using var streamRef = new DotNetStreamReference(stream);
-    //     await _js.InvokeVoidAsync("viewFileFromStream", detail.FileName, streamRef, GetMimeTypeForFileExtension(detail.FileName));
-    // }
+        MemoryStream stream = new MemoryStream(content);
+        stream.Position = 0;
+        using var streamRef = new DotNetStreamReference(stream);
+        await _js.InvokeVoidAsync("viewFileFromStream", receipt.ImageFileName, streamRef, GetMimeTypeForFileExtension(receipt.ImageFileName));
+    }
 
     private async Task preProcessImageFile()
     {

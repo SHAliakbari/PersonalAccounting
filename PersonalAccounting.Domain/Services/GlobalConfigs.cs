@@ -1,4 +1,4 @@
-﻿namespace PersonalAccounting.Domain.Services
+﻿namespace PersonalAccounting
 {
     public static class GlobalConfigs
     {

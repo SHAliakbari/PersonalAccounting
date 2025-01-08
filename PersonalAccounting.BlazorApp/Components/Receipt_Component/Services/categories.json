@@ -1,0 +1,101 @@
+[
+  {
+    "category": "Grocery",
+    "subcategories": [
+      "Produce (Fruits and Vegetables)",
+      "Dairy & Eggs",
+      "Meat & Seafood",
+      "Bakery",
+      "Pantry (Dry goods, canned goods)",
+      "Frozen Foods",
+      "Beverages",
+      "Snacks"
+    ]
+  },
+  {
+    "category": "Restaurant/Dining",
+    "subcategories": [
+      "Restaurant Meal",
+      "Cafe/Coffee Shop",
+      "Fast Food",
+      "Bar/Pub",
+      "Delivery/Takeout"
+    ]
+  },
+  {
+    "category": "Transportation",
+    "subcategories": [
+      "Fuel/Gas",
+      "Public Transportation (Bus, Train, Subway)",
+      "Taxi/Ride-hailing",
+      "Parking",
+      "Tolls"
+    ]
+  },
+  {
+    "category": "Retail/Shopping",
+    "subcategories": [
+      "Clothing",
+      "Electronics",
+      "Books & Stationery",
+      "Home Goods",
+      "Gifts & Toys",
+      "Pharmacy/Drugstore",
+      "Hardware/Home Improvement"
+    ]
+  },
+  {
+    "category": "Household",
+    "subcategories": [
+      "Utilities (Electricity, Gas, Water)",
+      "Rent/Mortgage",
+      "Home Maintenance",
+      "Cleaning Supplies",
+      "Furniture",
+      "Home Decor"
+    ]
+  },
+  {
+    "category": "Entertainment",
+    "subcategories": [
+      "Movies",
+      "Concerts/Shows",
+      "Sports Events",
+      "Games",
+      "Other Entertainment"
+    ]
+  },
+  {
+    "category": "Travel",
+    "subcategories": [
+      "Flights",
+      "Hotels",
+      "Car Rentals",
+      "Train Travel",
+      "Other Travel Expenses"
+    ]
+  },
+  {
+    "category": "Personal Care",
+    "subcategories": [
+      "Haircuts/Salon",
+      "Cosmetics/Toiletries",
+      "Spa Treatments",
+      "Gym/Fitness"
+    ]
+  },
+  {
+    "category": "Medical/Healthcare",
+    "subcategories": [
+      "Doctor Visits",
+      "Prescriptions",
+      "Medical Supplies",
+      "Dental Care",
+      "Vision Care"
+    ]
+  },
+  {
+    "category": "Other",
+    "subcategories": [] // Empty subcategories for "Other"
+  }
+]

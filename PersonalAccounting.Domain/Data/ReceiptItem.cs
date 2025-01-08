@@ -14,6 +14,12 @@ namespace PersonalAccounting.Domain.Data
         [Required]
         public string Description { get; set; }
 
+        public string Category { get; set; } = string.Empty;
+
+        public string ProductCode { get; set; } = string.Empty;
+
+        public string QuantityUnit { get; set; } = string.Empty;
+
         public decimal? Quantity { get; set; }
 
         public decimal? UnitPrice { get; set; }

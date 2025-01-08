@@ -34,20 +34,20 @@
         margin-top: 5px;
     }
 
-        .grid .transfersList {
+        .grid .receiptsList {
             width: 100%;
         }
 
-            .grid .transfersList td, .grid .transfersList th {
+            .grid .receiptsList td, .grid .receiptsList th {
                 border: 1px solid gray;
             }
 
             /* Stripe effect */
-            .grid .transfersList tbody tr {
+            .grid .receiptsList tbody tr {
                 background-color: rgba(0,0,0,0.04);
             }
 
-                .grid .transfersList tbody tr:nth-child(even) {
+                .grid .receiptsList tbody tr:nth-child(even) {
                     background: rgba(255,255,255,0.4);
                 }
 
@@ -71,10 +71,10 @@ else
         <QuickGrid TGridItem="Receipt" Items="@requests" Class="receiptsList">
             <TemplateColumn Title="Receipt Date">
                 <div>
-                    <div>@context.Date</div>
+                    <div>@context.Date.ToString("dd/MM/yyyy") @context.Time.ToString()</div>
                 </div>
             </TemplateColumn>
-            <PropertyColumn Property="@(c => c.Category)" Sortable="true" Title="MerchantName" />
+            <PropertyColumn Property="@(c => c.ShopName)" Sortable="true" Title="ShopName" />
             <PropertyColumn Property="@(c => c.MerchantName)" Sortable="true" Title="MerchantName" />
             <PropertyColumn Property="@(c => c.TotalAmount)" Sortable="true" Title="TotalAmount" />
             <PropertyColumn Property="@(c => c.PaidByUserFullName)" Sortable="true" Title="PayedByUserFullName" />
@@ -115,7 +115,7 @@ else
         requests = await getList();
         requests = requests.Where(x =>
             x.MerchantName.Contains(SearchTerm) ||
-            x.Category.Contains(SearchTerm) ||
+            x.ShopName.Contains(SearchTerm) ||
             x.PaidByUserFullName.Contains(SearchTerm) ||
             x.Date.ToString().Contains(SearchTerm)
         );

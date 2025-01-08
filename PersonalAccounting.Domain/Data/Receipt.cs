@@ -21,7 +21,7 @@ namespace PersonalAccounting.Domain.Data
         public string MerchantName { get; set; } = string.Empty;
 
         [Required]
-        public string Category { get; set; } = string.Empty;
+        public string ShopName { get; set; } = string.Empty;
 
         [Required]
         public decimal TotalAmount { get; set; }

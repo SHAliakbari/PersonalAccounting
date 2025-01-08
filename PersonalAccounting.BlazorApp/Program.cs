@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services;
 using PersonalAccounting.Domain.Services.OCR;
+using PersonalAccounting;
 
 
 var builder = WebApplication.CreateBuilder(args);
