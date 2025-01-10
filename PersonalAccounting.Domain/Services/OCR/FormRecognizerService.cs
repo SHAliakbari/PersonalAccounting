@@ -19,7 +19,7 @@ namespace PersonalAccounting.Domain.Services.OCR
             this.logger=logger;
         }
 
-        public async Task<Receipt> ExtractReceiptInfo(Stream myBlob)
+        public async Task<Receipt> ExtractReceiptInfo(Stream myBlob, Receipt receipt)
         {
             //log.LogInformation($"Blob trigger function Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
 
@@ -33,7 +33,7 @@ namespace PersonalAccounting.Domain.Services.OCR
             AnalyzeDocumentOperation operation = await client.AnalyzeDocumentAsync(WaitUntil.Completed, "prebuilt-receipt", myBlob); // Use the prebuilt receipt model
             AnalyzeResult result = operation.Value;
 
-            Receipt receipt = new Receipt();
+            receipt.Items.Clear();
 
             // Process the extracted data
             foreach (var document in result.Documents)

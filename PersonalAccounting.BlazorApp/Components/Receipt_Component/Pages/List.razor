@@ -80,8 +80,33 @@ else
             <PropertyColumn Property="@(c => c.PaidByUserFullName)" Sortable="true" Title="PayedByUserFullName" />
             <TemplateColumn Title="Actions">
                 <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
             </TemplateColumn>
         </QuickGrid>
+
+        @if (showConfirmation)
+        {
+            <div class="modal fade show" style="display:block; background-color: rgba(10,10,10,.8);" id="exampleModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirm Action</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="CancelConfirmation">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to perform this action?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CancelConfirmation">Cancel</button>
+                            <button type="button" class="btn btn-primary" @onclick="ConfirmAction">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
     </div>
 }
 
@@ -90,6 +115,8 @@ else
     GridItemsProvider<Receipt>? receiptsProvider;
     private bool isLoading = false;
     IQueryable<Receipt>? requests;
+    private bool showConfirmation = false;
+    private int selectedId;
 
     bool isAdmin = false;
 
@@ -147,6 +174,26 @@ else
 
         var res = await Service.GetAllReceipts();
         return res.AsQueryable();
+    }
+
+    private void DeleteReceipt(int id)
+    {
+        selectedId = id;
+        showConfirmation = true;
+    }
+
+    private void CancelConfirmation()
+    {
+        showConfirmation = false;
+        selectedId = 0;
+    }
+
+    private async Task ConfirmAction()
+    {
+        await Service.DeleteReceipt(selectedId);
+        requests = await getList();
+        InitList();
+        CancelConfirmation();
     }
 
     private void NavigateToDetails(int id)

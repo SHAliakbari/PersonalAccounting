@@ -1,0 +1,145 @@
+﻿@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using PersonalAccounting.Domain.Data
+
+
+@if (IsEditing)
+{
+    <div class="detailSection">
+        <h4>@(isNew ? "Add New Detail" : "Edit Detail")</h4>
+        <div class="row">
+            <div class="form-group col-md-3">
+                <label for="Category">Category:</label>
+                <InputSelect @bind-Value="detail.Category" class="form-control" aria-required="true" placeholder="">
+                    <optgroup label="Grocery">
+                        <option value="Grocery/Produce (Fruits and Vegetables)">Produce (Fruits and Vegetables)</option>
+                        <option value="Grocery/Dairy & Eggs">Dairy & Eggs</option>
+                        <option value="Grocery/Meat & Seafood">Meat & Seafood</option>
+                        <option value="Grocery/Bakery">Bakery</option>
+                        <option value="Grocery/Pantry (Dry goods, canned goods)">Pantry (Dry goods, canned goods)</option>
+                        <option value="Grocery/Frozen Foods">Frozen Foods</option>
+                        <option value="Grocery/Beverages">Beverages</option>
+                        <option value="Grocery/Snacks">Snacks</option>
+                    </optgroup>
+                    <optgroup label="Restaurant/Dining">
+                        <option value="Restaurant/Dining/Restaurant Meal">Restaurant Meal</option>
+                        <option value="Restaurant/Dining/Cafe/Coffee Shop">Cafe/Coffee Shop</option>
+                        <option value="Restaurant/Dining/Fast Food">Fast Food</option>
+                        <option value="Restaurant/Dining/Bar/Pub">Bar/Pub</option>
+                        <option value="Restaurant/Dining/Delivery/Takeout">Delivery/Takeout</option>
+                    </optgroup>
+                    <optgroup label="Transportation">
+                        <option value="Transportation/Fuel/Gas">Fuel/Gas</option>
+                        <option value="Transportation/Public Transportation (Bus, Train, Subway)">Public Transportation (Bus, Train, Subway)</option>
+                        <option value="Transportation/Taxi/Ride-hailing">Taxi/Ride-hailing</option>
+                        <option value="Transportation/Parking">Parking</option>
+                        <option value="Transportation/Tolls">Tolls</option>
+                    </optgroup>
+                    <optgroup label="Retail/Shopping">
+                        <option value="Retail/Shopping/Clothing">Clothing</option>
+                        <option value="Retail/Shopping/Electronics">Electronics</option>
+                        <option value="Retail/Shopping/Books & Stationery">Books & Stationery</option>
+                        <option value="Retail/Shopping/Home Goods">Home Goods</option>
+                        <option value="Retail/Shopping/Gifts & Toys">Gifts & Toys</option>
+                        <option value="Retail/Shopping/Pharmacy/Drugstore">Pharmacy/Drugstore</option>
+                        <option value="Retail/Shopping/Hardware/Home Improvement">Hardware/Home Improvement</option>
+                    </optgroup>
+                    <optgroup label="Household">
+                        <option value="Household/Utilities (Electricity, Gas, Water)">Utilities (Electricity, Gas, Water)</option>
+                        <option value="Household/Rent/Mortgage">Rent/Mortgage</option>
+                        <option value="Household/Home Maintenance">Home Maintenance</option>
+                        <option value="Household/Cleaning Supplies">Cleaning Supplies</option>
+                        <option value="Household/Furniture">Furniture</option>
+                        <option value="Household/Home Decor">Home Decor</option>
+                    </optgroup>
+                    <optgroup label="Entertainment">
+                        <option value="Entertainment/Movies">Movies</option>
+                        <option value="Entertainment/Concerts/Shows">Concerts/Shows</option>
+                        <option value="Entertainment/Sports Events">Sports Events</option>
+                        <option value="Entertainment/Games">Games</option>
+                        <option value="Entertainment/Other Entertainment">Other Entertainment</option>
+                    </optgroup>
+                    <optgroup label="Travel">
+                        <option value="Travel/Flights">Flights</option>
+                        <option value="Travel/Hotels">Hotels</option>
+                        <option value="Travel/Car Rentals">Car Rentals</option>
+                        <option value="Travel/Train Travel">Train Travel</option>
+                        <option value="Travel/Other Travel Expenses">Other Travel Expenses</option>
+                    </optgroup>
+                    <optgroup label="Personal Care">
+                        <option value="Personal Care/Haircuts/Salon">Haircuts/Salon</option>
+                        <option value="Personal Care/Cosmetics/Toiletries">Cosmetics/Toiletries</option>
+                        <option value="Personal Care/Spa Treatments">Spa Treatments</option>
+                        <option value="Personal Care/Gym/Fitness">Gym/Fitness</option>
+                    </optgroup>
+                    <optgroup label="Medical/Healthcare">
+                        <option value="Medical/Healthcare/Doctor Visits">Doctor Visits</option>
+                        <option value="Medical/Healthcare/Prescriptions">Prescriptions</option>
+                        <option value="Medical/Healthcare/Medical Supplies">Medical Supplies</option>
+                        <option value="Medical/Healthcare/Dental Care">Dental Care</option>
+                        <option value="Medical/Healthcare/Vision Care">Vision Care</option>
+                    </optgroup>
+                    <optgroup label="Other">
+                        <option value="Other/Other">Other</option>
+                    </optgroup>
+                </InputSelect>
+                <ValidationMessage For="() => detail.Description" class="text-danger" />
+            </div>
+            <div class="form-group col-md-3">
+                <label for="Description">Description:</label>
+                <InputText required @bind-Value="detail.Description" class=@{
+                       $" form-control"
+                       } aria-required="true" placeholder="Banana, Pineapple, ..." />
+                <ValidationMessage For="() => detail.Description" class="text-danger" />
+            </div>
+            <div class="form-group col-md-2">
+                <label for="Quantity">Quantity:</label>
+                <InputNumber required @bind-Value="detail.Quantity" class=@{
+                         $"form-control"
+                         } aria-required="true" placeholder="" />
+                <ValidationMessage For="() => detail.Quantity" class="text-danger" />
+            </div>
+            <div class="form-group col-md-2">
+                <label for="UnitPrice">UnitPrice:</label>
+                <InputNumber required @bind-Value="detail.UnitPrice" class=@{
+                         $"form-control"
+                         } aria-required="true" placeholder="" />
+                <ValidationMessage For="() => detail.UnitPrice" class="text-danger" />
+            </div>
+            <div class="form-group col-md-2">
+                <label for="TotalPrice">TotalPrice:</label>
+                <InputNumber required @bind-Value="detail.TotalPrice" class=@{
+                         $"form-control"
+                         } aria-required="true" placeholder="" />
+                <ValidationMessage For="() => detail.TotalPrice" class="text-danger" />
+            </div>
+            @if (isNew)
+            {
+                <div class="text-end">
+                    <button type="button" @onclick="OnItemSaved" class="btn btn-success">Add Detail</button>
+                </div>
+            }
+            <div class="text-end">
+                <button type="button" @onclick="OnEditCancelled" class="btn btn-danger">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool IsEditing => detail != null;
+
+    private bool isNew => detail.Id == 0;
+
+    [Parameter]
+    public ReceiptItem detail { get; set; }
+
+    [Parameter]
+    public bool IsNew { get; set; }
+
+    [Parameter]
+    public EventCallback OnItemSaved { get; set; }
+
+    [Parameter]
+    public EventCallback OnEditCancelled { get; set; }
+}

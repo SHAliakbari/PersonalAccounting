@@ -144,7 +144,7 @@ else
                 <div class="form-floating mb-3">
                     <InputText disabled="@(!isAdmin)" @bind-Value="master.PaidByUserName" class=@{
                                $" form-control"
-                               } aria-required="true" placeholder="Meat, Fruits, ..." />
+                               } @onblur="FillPayedByUserInformation" aria-required="true" placeholder="Meat, Fruits, ..." />
                     <label for="PayedByUserName">PaidByUserName</label>
                     <ValidationMessage For="() => master.PaidByUserName" class="text-danger" />
                 </div>
@@ -158,9 +158,16 @@ else
             @uploadStatus
             @if (master.Thumbnail != null)
             {
-                    <img @ondblclick="() => OpenFile(master)" width="100" height="100" src="data:image;base64, @System.Convert.ToBase64String(master.Thumbnail)" />
+                <img @ondblclick="() => OpenFile(master)" width="100" height="100" src="data:image;base64, @System.Convert.ToBase64String(master.Thumbnail)" />
             }
-            <button type="button" class="btn btn-secondary btn-lg" @onclick="preProcessImageFile">Pre-process image file</button>
+            @if (isReceiptImageUploaded)
+            {
+                <button disabled="@isProcessing" type="button" class="btn btn-warning btn-lg" @onclick="ShowConfirmationClearFormReprocess">Process receipt file</button>
+            }
+            @if (isProcessing)
+            {
+                <span>Processing</span>
+            }
         </div>
 
         <hr />
@@ -194,7 +201,7 @@ else
                                 {
                                     <td colspan="8">
                                         <div class="detailSection">
-                                            <h4>@(isDetailNew ? "Add New Detail" : "Edit Detail")</h4>
+                                            <h4>@(isNew ? "Add New Detail" : "Edit Detail")</h4>
                                             <div class="row">
                                                 <div class="form-group col-md-3">
                                                     <label for="Category">Category:</label>
@@ -336,9 +343,9 @@ else
             </div>
         }
 
-       @{
-           
-         
+        @{
+
+
         }
         <hr />
         <div class="text-end">
@@ -349,6 +356,30 @@ else
         </div>
 
     </EditForm>
+
+    @if (showConfirmationClearFormReprocess)
+    {
+        <div class="modal fade show" style="display:block; background-color: rgba(10,10,10,.8);" id="exampleModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Action</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="CancelConfirmationClearFormReprocess">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        Are you sure you want to perform this action?
+                        Will ereas the form content !
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CancelConfirmationClearFormReprocess">Cancel</button>
+                        <button type="button" class="btn btn-primary" @onclick="ConfirmActionClearFormReprocess">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
@@ -356,13 +387,18 @@ else
     private ReceiptItem detail = new ReceiptItem();
     private bool isDetailNew = true;
     private List<ApplicationUser> users;
+    private bool showConfirmationClearFormReprocess = false;
+
+    private bool isProcessing = false;
+
+    private bool isReceiptImageUploaded = false;
 
     private string PaidUserClassName = string.Empty;
 
 
     private bool isNew { get; set; }
 
-    string uploadStatus = "";
+    string uploadStatus { get; set; } = string.Empty;
 
     [Parameter]
     public string id { get; set; }
@@ -430,8 +466,30 @@ else
         await _js.InvokeVoidAsync("viewFileFromStream", receipt.ImageFileName, streamRef, GetMimeTypeForFileExtension(receipt.ImageFileName));
     }
 
+    private void ShowConfirmationClearFormReprocess()
+    {
+        showConfirmationClearFormReprocess = true;
+    }
+
+    private void CancelConfirmationClearFormReprocess()
+    {
+        showConfirmationClearFormReprocess = false;
+    }
+
+    private async Task ConfirmActionClearFormReprocess()
+    {
+        showConfirmationClearFormReprocess = false;
+        await preProcessImageFile();
+    }
+
     private async Task preProcessImageFile()
     {
+        if (master.ImageFileName == null)
+            return;
+
+        uploadStatus = "Processing";
+        isProcessing = true;
+
         var file = await blobService.Download(master.ImageFileName);
 
         using (var stream = new MemoryStream(file))
@@ -440,9 +498,11 @@ else
             // ImagePreprocessor.PreprocessImage(stream, ref finalizedImage);
             // var content = service.ExtractTextFromImage(finalizedImage.ToArray());
 
-            uploadStatus = "Processing";
-            master = await formRecognizerService.ExtractReceiptInfo(stream);
+
+            await formRecognizerService.ExtractReceiptInfo(stream, master);
             uploadStatus = "Processed . Check the form info";
+            isProcessing = false;
+            isReceiptImageUploaded = false;
         }
     }
 
@@ -491,6 +551,8 @@ else
             // if (files.Count > 0)
             {
                 uploadStatus = "uploading";
+                master.Thumbnail = null;
+                master.ImageFileName = "";
                 // foreach (var file in files)
                 // {
                 using var memoryStream = new MemoryStream();
@@ -510,6 +572,7 @@ else
 
                 master.Thumbnail = thumbnail;
                 master.ImageFileName = fileName;
+                isReceiptImageUploaded = true;
                 // }
 
                 uploadStatus = "File is ready to Save";
@@ -548,6 +611,7 @@ else
     private async Task LoadMaster(int id)
     {
         master = await Service.GetReceiptById(id);
+        isReceiptImageUploaded = false;
     }
 
     public async Task HandleSubmit(EditContext editContext)
