@@ -27,6 +27,7 @@ namespace PersonalAccounting.Domain.Data
 
         public DbSet<Receipt> Receipts { get; set; }
         public DbSet<ReceiptItem> ReceiptItems { get; set; }
+        public DbSet<ReceiptItemShare> ReceiptItemShares { get; set; }
 
         public override void Dispose()
         {
@@ -52,6 +53,13 @@ namespace PersonalAccounting.Domain.Data
                 .WithMany(m => m.Items)
                 .HasForeignKey(d => d.ReceiptId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ReceiptItemShare>()
+                .HasOne(d => d.ReceiptItem)
+                .WithMany(m => m.Shares)
+                .HasForeignKey(d => d.ReceiptItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 

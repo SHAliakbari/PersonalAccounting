@@ -121,16 +121,12 @@ else
                     <ValidationMessage For="() => master.Date" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText disabled="@(!isAdmin)" @bind-Value="master.MerchantName" class=@{
-                               $" form-control"
-                               } aria-required="true" placeholder="Freshco, ..." />
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.MerchantName" class="form-control" aria-required="true" placeholder="Freshco, ..." />
                     <label for="MerchantName">MerchantName</label>
                     <ValidationMessage For="() => master.MerchantName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText disabled="@(!isAdmin)" @bind-Value="master.ShopName" class=@{
-                               $" form-control"
-                               } aria-required="true" placeholder="Shoppers, Freshco, ..." />
+                    <InputText disabled="@(!isAdmin)" @bind-Value="master.ShopName" class=" form-control" aria-required="true" placeholder="Shoppers, Freshco, ..." />
                     <label for="ShopName">ShopName</label>
                     <ValidationMessage For="() => master.ShopName" class="text-danger" />
                 </div>
@@ -142,9 +138,7 @@ else
                     <ValidationMessage For="() => master.TotalAmount" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText disabled="@(!isAdmin)" @bind-Value="master.PaidByUserName" class=@{
-                               $" form-control"
-                               } @onblur="FillPayedByUserInformation" aria-required="true" placeholder="Meat, Fruits, ..." />
+                    <InputText required disabled="@(!isAdmin)" @bind-Value="master.PaidByUserName" class=" form-control" @onblur="FillPayedByUserInformation" aria-required="true" placeholder="your_email@email.com" />
                     <label for="PayedByUserName">PaidByUserName</label>
                     <ValidationMessage For="() => master.PaidByUserName" class="text-danger" />
                 </div>
@@ -199,7 +193,7 @@ else
                             {
                                 <td colspan="8">
                                     <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                                                OnEditCancelled="CancelNewDetail"></AddEditRow>
+                                    OnEditCancelled="CancelNewDetail"></AddEditRow>
                                 </td>
                             }
                             else
@@ -214,6 +208,11 @@ else
                                 <td>
                                     <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteDetail(detail)">Delete</button>
                                     <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
+
+                                    <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModal(detail))">Manage Shares</button>
+                                        <AddEditShares Users=@users ReceiptItem="@selectedDetail" @ref="shareModal" />
+
+
                                 </td>
                             }
                         </tr>
@@ -270,9 +269,12 @@ else
 @code {
     private Receipt master { get; set; } = default!; // Initialize with default value
     private ReceiptItem? detail = null;
+    private ReceiptItem? selectedDetail = null;
     private bool isDetailNew = true;
     private List<ApplicationUser> users;
     private bool showConfirmationClearFormReprocess = false;
+
+    private AddEditShares shareModal;
 
     private bool isProcessing = false;
 
@@ -312,6 +314,12 @@ else
         {
             await LoadMaster(int.Parse(id));
         }
+    }
+
+    private void OpenShareModal(ReceiptItem detail)
+    {
+        this.selectedDetail = detail;
+        shareModal.OpenModal();
     }
 
     private string getRowClass(ReceiptItem detail)

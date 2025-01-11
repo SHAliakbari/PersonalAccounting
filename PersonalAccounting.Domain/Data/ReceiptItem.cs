@@ -24,7 +24,9 @@ namespace PersonalAccounting.Domain.Data
 
         public decimal? UnitPrice { get; set; }
 
-        public decimal TotalPrice { get; set; } 
+        public decimal TotalPrice { get; set; }
+
+        public List<ReceiptItemShare> Shares { get; set; } = new List<ReceiptItemShare>(); // Initialize to avoid null exceptions
 
         // Foreign key to the Receipt
         public int ReceiptId { get; set; }

@@ -1,0 +1,97 @@
+﻿@using System.Collections.Generic;
+@using System.Linq;
+@using PersonalAccounting.Domain.Data
+
+@if (ReceiptItem != null)
+{
+    <div class="modal @(ShowModal ? "show d-block" : "d-none")" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Manage Shares for @ReceiptItem.Description</h5>
+                    <button type="button" class="close" @onclick="CloseModal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    @foreach (var share in ReceiptItem.Shares)
+                    {
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">User Name:</label>
+                            <div class="col-sm-6">
+                                <input type="text" class="form-control" @bind="share.UserName" />
+                            </div>
+                            <div class="col-sm-2">
+                                <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveShare(share))">-</button>
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label class="col-sm-4 col-form-label">Share (%):</label>
+                            <div class="col-sm-8">
+                                <input type="number" class="form-control" @bind="share.Share" min="0" max="100" />
+                            </div>
+                        </div>
+                    }
+                    <button type="button" class="btn btn-primary btn-sm" @onclick="AddShare">Add Share</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (ShowModal)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter]
+    public ReceiptItem ReceiptItem { get; set; }
+
+    [Parameter]
+    public List<ApplicationUser> Users { get; set; }
+
+    [Parameter]
+    public EventCallback OnSharesSaved { get; set; }
+
+    public bool ShowModal { get; set; }
+
+    public void OpenModal()
+    {
+        ShowModal = true;
+    }
+
+    private void CloseModal()
+    {
+        ShowModal = false;
+    }
+
+    private void AddShare()
+    {
+        ReceiptItem.Shares.Add(new ReceiptItemShare());
+    }
+
+    private void RemoveShare(ReceiptItemShare shareToRemove)
+    {
+        ReceiptItem.Shares.Remove(shareToRemove);
+    }
+
+   
+
+    private async Task SaveShares()
+    {
+        //Validate total share
+        if (ReceiptItem.Shares.Sum(s => s.Share) != 100)
+        {
+            //Show error message or handle validation in a proper way
+            Console.WriteLine("Total share must be 100%");
+            return;
+        }
+        await OnSharesSaved.InvokeAsync();
+        CloseModal();
+    }
+}

@@ -20,18 +20,20 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 
         public async Task<Receipt> GetReceiptById(int id)
         {
-            return await _context.Receipts.Include(r => r.Items).FirstAsync(r => r.Id == id);
+            return await _context.Receipts.Include(r => r.Items).ThenInclude(r=> r.Shares).FirstAsync(r => r.Id == id);
         }
 
         public async Task AddReceipt(Receipt receipt)
         {
             _context.Receipts.Add(receipt);
+            FillReceiptItemShares(receipt);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateReceipt(Receipt receipt)
         {
             _context.Entry(receipt).State = EntityState.Modified;
+            FillReceiptItemShares(receipt);
             await _context.SaveChangesAsync();
         }
 
@@ -42,6 +44,24 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
             {
                 _context.Receipts.Remove(receipt);
                 await _context.SaveChangesAsync();
+            }
+        }
+
+        private void FillReceiptItemShares(Receipt receipt)
+        {
+            foreach (var item in receipt.Items)
+            {
+                if (item.Shares.Count == 0)
+                {
+                    item.Shares.Add(new ReceiptItemShare
+                    {
+                        ReceiptItem = item,
+                        Share = 100,
+                        UserId = receipt.PaidByUserId,
+                        UserName = receipt.PaidByUserName,
+                        UserFullName = receipt.PaidByUserFullName
+                    });
+                }
             }
         }
     }
