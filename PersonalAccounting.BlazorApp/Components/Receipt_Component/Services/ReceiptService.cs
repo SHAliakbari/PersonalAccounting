@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PersonalAccounting.Domain.Data;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using Telegram.Bot.Types;
 
 namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 {
@@ -13,9 +15,15 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Receipt>> GetAllReceipts()
+        public async Task<IEnumerable<Receipt>> GetAllReceipts(string userName)
         {
-            var result = await _context.Receipts.Include(r => r.Items).ThenInclude(r => r.Shares).AsNoTracking().ToListAsync();
+            IQueryable<Receipt> query = _context.Receipts;
+            if (userName != null)
+            {
+                query = query.Where(r => r.PaidByUserName == userName || r.Items.Any(ri => ri.Shares.Any(s => s.UserName == userName)));
+            }
+
+            var result = await query.Include(r => r.Items).ThenInclude(r => r.Shares).AsNoTracking().ToListAsync();
 
             foreach (var item in result)
             {

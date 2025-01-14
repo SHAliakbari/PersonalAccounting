@@ -133,7 +133,7 @@ else
             </div>
             <div class="col-sm-6">
                 <div class="form-floating mb-3">
-                    <InputNumber @bind-Value="master.TotalAmount" @oninput="(ChangeEventArgs e) => { master.TotalAmount = string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse((e.Value.ToString())); }" class="form-control" aria-required="true" />
+                    <InputNumber disabled="@(!isAdmin)" @bind-Value="master.TotalAmount" @oninput="(ChangeEventArgs e) => { master.TotalAmount = string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse((e.Value.ToString())); }" class="form-control" aria-required="true" />
                     <label for="TotalAmount">TotalAmount</label>
                     <ValidationMessage For="() => master.TotalAmount" class="text-danger" />
                 </div>
@@ -142,18 +142,24 @@ else
                     <label for="PayedByUserName">PaidByUserName</label>
                     <ValidationMessage For="() => master.PaidByUserName" class="text-danger" />
                 </div>
-                <div class="form-floating mb-3">
-                    <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModalForAll())">Manage Shares For All</button>
-                    <AddEditShares Users=@users ReceiptItem="@selectedDetail" IsForAll="true" OnSharesSaved="ShareModalForAllSave" @ref="shareModalAll" />
-                </div>
+                @if (isAdmin)
+                {
+                    <div class="form-floating mb-3">
+                        <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModalForAll())">Manage Shares For All</button>
+                        <AddEditShares Users=@users ReceiptItem="@selectedDetail" IsForAll="true" OnSharesSaved="ShareModalForAllSave" @ref="shareModalAll" />
+                    </div>
+                }
 
             </div>
         </div>
         <ValidationSummary />
         <div class="form-group">
             <label>Receipt File:</label>
-            <InputFile OnChange="LoadFiles" />
-            @uploadStatus
+            @if (isAdmin)
+            {
+                <InputFile OnChange="LoadFiles" />
+                @uploadStatus
+            }
             @if (master.Thumbnail != null)
             {
                 <img @ondblclick="() => OpenFile(master)" width="100" height="100" src="data:image;base64, @System.Convert.ToBase64String(master.Thumbnail)" />
@@ -170,10 +176,13 @@ else
 
         <hr />
         <h2>Details</h2>
-        <div class="text-start">
-            <button type="button" @onclick="NewDetail" class="btn btn-success btn-sm">
-                New Detail
-            </button>
+        <div class="text-end">
+            @if (isAdmin)
+            {
+                <button type="button" @onclick="NewDetail" class="btn btn-success btn-sm">
+                    New Detail
+                </button>
+            }
         </div>
         <div class="grid">
             <table class="details">
@@ -210,13 +219,14 @@ else
                                 <td>@detail.UnitPrice</td>
                                 <td>@detail.TotalPrice</td>
                                 <td>
-                                    <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteDetail(detail)">Delete</button>
-                                    <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
+                                    @if (isAdmin)
+                                    {
+                                        <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteDetail(detail)">Delete</button>
+                                        <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
+                                    }
 
                                     <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModal(detail))">Manage Shares</button>
-                                    <AddEditShares Users=@users ReceiptItem="@selectedDetail" @ref="shareModal" />
-
-
+                                    <AddEditShares IsReadOnly=!isAdmin Users=@users ReceiptItem="@selectedDetail" @ref="shareModal" />
                                 </td>
                             }
                         </tr>

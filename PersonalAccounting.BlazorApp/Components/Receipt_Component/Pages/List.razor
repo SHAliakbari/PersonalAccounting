@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using System.Text.Json
 @using System.Globalization
+@using System.Text
 @rendermode InteractiveServer
 
 @attribute [Authorize]
@@ -66,60 +67,93 @@
 }
 else
 {
-    <div class="grid" tabindex="-1">
+    <div>
+        <div>
+            @foreach (var item in usersSymbol)
+            {
+                <span class=@($"badge {item.Style}")>@item.UserName</span>
+            }
+        </div>
+        <div class="grid" tabindex="-1">
 
-        <QuickGrid TGridItem="Receipt" Items="@requests" Class="receiptsList">
-            <TemplateColumn Title="Receipt Date">
-                <div>
-                    <div>@context.Date.ToString("dd/MM/yyyy") @context.Time.ToString()</div>
-                </div>
-            </TemplateColumn>
-            <PropertyColumn Property="@(c => c.ShopName)" Sortable="true" Title="ShopName" />
-            <PropertyColumn Property="@(c => c.MerchantName)" Sortable="true" Title="MerchantName" />
-            <PropertyColumn Property="@(c => c.TotalAmount)" Sortable="true" Title="TotalAmount" />
-            <PropertyColumn Property="@(c => c.PaidByUserFullName)" Sortable="true" Title="PayedByUserFullName" />
-            <TemplateColumn Title="Actions">
-                <div class="@GetRowClass(context)">
-                    <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
-                    <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
-                    <small>@GetShareContent(context)</small>
-                </div>
-            </TemplateColumn>
-        </QuickGrid>
+            <QuickGrid TGridItem="Receipt" Items="@requests" Class="receiptsList">
+                <TemplateColumn Title="Receipt Date">
+                    <div>
+                        <div>@context.Date.ToString("dd/MM/yyyy") @context.Time.ToString()</div>
+                    </div>
+                </TemplateColumn>
+                <PropertyColumn Property="@(c => c.ShopName)" Sortable="true" Title="ShopName" />
+                <PropertyColumn Property="@(c => c.MerchantName)" Sortable="true" Title="MerchantName" />
+                <PropertyColumn Property="@(c => c.TotalAmount)" Sortable="true" Title="TotalAmount" />
+                <PropertyColumn Property="@(c => c.PaidByUserFullName)" Sortable="true" Title="PayedByUserFullName" />
+                <TemplateColumn Title="Actions">
+                    <div class="@GetRowClass(context)">
+                        <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+                        @if (isAdmin)
+                        {
+                            <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
+                        }
+                        <small>@GetShareContent(context)</small>
+                    </div>
+                </TemplateColumn>
+            </QuickGrid>
 
-        @if (showConfirmation)
-        {
-            <div class="modal fade show" style="display:block; background-color: rgba(10,10,10,.8);" id="exampleModal" tabindex="-1" role="dialog">
-                <div class="modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Confirm Action</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="CancelConfirmation">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            Are you sure you want to perform this action?
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CancelConfirmation">Cancel</button>
-                            <button type="button" class="btn btn-primary" @onclick="ConfirmAction">Confirm</button>
+            @if (showConfirmation)
+            {
+                <div class="modal fade show" style="display:block; background-color: rgba(10,10,10,.8);" id="exampleModal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Action</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @onclick="CancelConfirmation">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to perform this action?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal" @onclick="CancelConfirmation">Cancel</button>
+                                <button type="button" class="btn btn-primary" @onclick="ConfirmAction">Confirm</button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
 
+        </div>
     </div>
 }
 
 @code {
     string SearchTerm = "";
-    GridItemsProvider<Receipt>? receiptsProvider;
+
     private bool isLoading = false;
     IQueryable<Receipt>? requests;
     private bool showConfirmation = false;
     private int selectedId;
+
+    string[] styles = new string[]
+    {
+        "bg-primary",
+        "bg-secondary",
+        "bg-success",
+        "bg-danger",
+        "bg-warning",
+        "bg-info",
+        "bg-light",
+        "bg-dark"
+
+    };
+
+    record UserSymbol
+    {
+        public string UserName { get; set; }
+        public string Symbol { get; set; }
+        public string Style { get; set; }
+    }
+
+    List<UserSymbol> usersSymbol = new List<UserSymbol>();
 
     bool isAdmin = false;
 
@@ -158,16 +192,9 @@ else
         // an arbitrary data soure. In this example, we need to translate query parameters into the particular URL format
         // supported by the external JSON API. It's only possible to perform whatever sorting/filtering/etc is supported
         // by the external API.
-        receiptsProvider = async req =>
-        {
-            isLoading = true;
-            var query = requests;
-            query = req.ApplySorting(query);
 
-            var result = await query.ToListAsync();
-            isLoading = false;
-            return GridItemsProviderResult.From(items: result, totalItemCount: result.Count);
-        };
+
+
     }
 
     async Task<IQueryable<Receipt>> getList()
@@ -175,15 +202,33 @@ else
         var user = await UserAccessor.GetRequiredUserAsync(HttpContextAccessor.HttpContext!);
         isAdmin = await UserManager.IsInRoleAsync(user, "admin");
 
-        var res = await Service.GetAllReceipts();
+        var res = await Service.GetAllReceipts(user.UserName);
+
+        res.SelectMany(x => x.Items.SelectMany(x => x.Shares.Select(x => x.UserName))).Distinct()
+        .ToList().ForEach(x =>
+        {
+            if (!usersSymbol.Any(userSymbol => userSymbol.UserName == x))
+            {
+                usersSymbol.Add(new UserSymbol { UserName = x, Symbol = x.Substring(0, 2).ToUpper(), Style = styles[usersSymbol.Count] });
+            }
+        });
+
+
         return res.AsQueryable();
     }
 
-    private string GetShareContent(Receipt item)
+    private MarkupString GetShareContent(Receipt item)
     {
-        var content = String.Join(",", item.UserShares.Select(x => $"{x.Key}({x.Value})"));
+        StringBuilder builder1 = new StringBuilder();
 
-        return content;
+        foreach (var share in item.UserShares)
+        {
+            var userSymbol = usersSymbol.First(x => x.UserName == share.Key);
+
+            builder1.AppendLine($"<span class=\"badge {userSymbol.Style}\" title=\"{share.Key}\">{share.Value.ToString("##,##.##")}</span>");
+        }
+
+        return new MarkupString(builder1.ToString());
     }
 
     private string GetRowClass(Receipt item)

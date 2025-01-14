@@ -227,9 +227,12 @@ else
                                 </button>
                             </div>
                         }
+                        @if (isAdmin)
+                        {
                         <div class="col-6">
                             <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteComment(detail)">Delete</button>
                         </div>
+                        }
                     </div>
                     <div class="row comment">
 

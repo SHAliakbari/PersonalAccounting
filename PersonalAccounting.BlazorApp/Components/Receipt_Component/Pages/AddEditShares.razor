@@ -19,7 +19,7 @@
                         <div class="row">
                             <div class="form-group col-sm-7">
                                 <label for="Category">UserName:</label>
-                                <InputSelect @onblur="() => UserNameChanged(share)" @bind-Value="share.UserName" class="form-control" aria-required="true" placeholder="">
+                                <InputSelect disabled="@(IsReadOnly)" @onblur="() => UserNameChanged(share)" @bind-Value="share.UserName" class="form-control" aria-required="true" placeholder="">
                                     @foreach (var user in ActiveUsers)
                                     {
                                         <option value=@user.UserName>@user.UserName - @user.FullName</option>
@@ -29,15 +29,21 @@
                             </div>
                             <div class="form-group col-sm-3">
                                 <label for="Category">Share (%):</label>
-                                <InputNumber class="form-control" @bind-Value="share.Share" />
+                                <InputNumber disabled="@(IsReadOnly)" class="form-control" @bind-Value="share.Share" />
                                 <ValidationMessage For="() => share.Share" class="text-danger" />
                             </div>
-                            <div class="form-group col-sm-2">
-                                <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveShare(share))">-</button>
-                            </div>
+                            @if (!IsReadOnly)
+                            {
+                                <div class="form-group col-sm-2">
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveShare(share))">-</button>
+                                </div>
+                            }
                         </div>
                     }
-                    <button type="button" class="btn btn-primary btn-sm" @onclick="AddShare">Add Share</button>
+                    @if (!IsReadOnly)
+                    {
+                        <button type="button" class="btn btn-primary btn-sm" @onclick="AddShare">Add Share</button>
+                    }
                 </div>
 
                 <div class="modal-footer">
@@ -71,6 +77,9 @@
 
     [Parameter]
     public EventCallback OnSharesSaved { get; set; }
+
+    [Parameter]
+    public bool IsReadOnly { get; set; } = false;
 
     [Parameter]
     public bool IsForAll { get; set; } = false;
