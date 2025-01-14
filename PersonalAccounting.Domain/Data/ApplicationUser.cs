@@ -7,7 +7,7 @@ namespace PersonalAccounting.Domain.Data
     public class ApplicationUser : IdentityUser
     {
         public string? InviteCode { get; set; }
-        public bool? IsInviteUsed { get; set; }
+        public bool IsInviteUsed { get; set; } = false;
 
         public string TelegramUser { get; set; } = string.Empty;
 
