@@ -14,6 +14,7 @@ using System.IO;
 using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services;
 using PersonalAccounting.Domain.Services.OCR;
 using PersonalAccounting;
+using PersonalAccounting.BlazorApp;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -112,11 +113,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AdminOnly",
-    policy =>
-    {
-        policy.RequireRole("admin");
-    });
+    AuthorizationPolicies.RegisterPolicies(builder, options);
 });
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");

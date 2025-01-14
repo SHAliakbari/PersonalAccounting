@@ -79,8 +79,11 @@ else
             <PropertyColumn Property="@(c => c.TotalAmount)" Sortable="true" Title="TotalAmount" />
             <PropertyColumn Property="@(c => c.PaidByUserFullName)" Sortable="true" Title="PayedByUserFullName" />
             <TemplateColumn Title="Actions">
-                <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
-                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
+                <div class="@GetRowClass(context)">
+                    <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+                    <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
+                    <small>@GetShareContent(context)</small>
+                </div>
             </TemplateColumn>
         </QuickGrid>
 
@@ -174,6 +177,20 @@ else
 
         var res = await Service.GetAllReceipts();
         return res.AsQueryable();
+    }
+
+    private string GetShareContent(Receipt item)
+    {
+        var content = String.Join(",", item.UserShares.Select(x => $"{x.Key}({x.Value})"));
+
+        return content;
+    }
+
+    private string GetRowClass(Receipt item)
+    {
+
+
+        return item.Id == selectedId ? "selected" : "";
     }
 
     private void DeleteReceipt(int id)

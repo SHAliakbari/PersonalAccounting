@@ -15,7 +15,14 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 
         public async Task<IEnumerable<Receipt>> GetAllReceipts()
         {
-            return await _context.Receipts.Include(r => r.Items).AsNoTracking().ToListAsync();
+            var result = await _context.Receipts.Include(r => r.Items).ThenInclude(r => r.Shares).AsNoTracking().ToListAsync();
+
+            foreach (var item in result)
+            {
+                item.UserShares = item.CalculateSharedAmounts();
+            }
+
+            return result;
         }
 
         public async Task<Receipt> GetReceiptById(int id)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,7 +39,33 @@ namespace PersonalAccounting.Domain.Data
 
         public byte[]? Thumbnail { get; set; }
 
+        [NotMapped]
+        public Dictionary<string, decimal> UserShares { get; set; } = new Dictionary<string, decimal>();
+
         // Navigation property for related items
         public List<ReceiptItem> Items { get; set; } = new List<ReceiptItem>(); // Initialize to avoid null exceptions
+
+        public Dictionary<string, decimal> CalculateSharedAmounts()
+        {
+            var sharedAmounts = new Dictionary<string, decimal>();
+
+            foreach (var item in Items)
+            {
+                foreach (var share in item.Shares)
+                {
+                    decimal amountOwed = item.TotalPrice * (share.Share / 100);
+                    if (sharedAmounts.ContainsKey(share.UserName))
+                    {
+                        sharedAmounts[share.UserName] += amountOwed;
+                    }
+                    else
+                    {
+                        sharedAmounts[share.UserName] = amountOwed;
+                    }
+                }
+            }
+
+            return sharedAmounts;
+        }
     }
 }

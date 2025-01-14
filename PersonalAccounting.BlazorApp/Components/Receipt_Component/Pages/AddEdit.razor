@@ -142,6 +142,10 @@ else
                     <label for="PayedByUserName">PaidByUserName</label>
                     <ValidationMessage For="() => master.PaidByUserName" class="text-danger" />
                 </div>
+                <div class="form-floating mb-3">
+                    <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModalForAll())">Manage Shares For All</button>
+                    <AddEditShares Users=@users ReceiptItem="@selectedDetail" IsForAll="true" OnSharesSaved="ShareModalForAllSave" @ref="shareModalAll" />
+                </div>
 
             </div>
         </div>
@@ -193,7 +197,7 @@ else
                             {
                                 <td colspan="8">
                                     <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                                    OnEditCancelled="CancelNewDetail"></AddEditRow>
+                                                OnEditCancelled="CancelNewDetail"></AddEditRow>
                                 </td>
                             }
                             else
@@ -210,7 +214,7 @@ else
                                     <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
 
                                     <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModal(detail))">Manage Shares</button>
-                                        <AddEditShares Users=@users ReceiptItem="@selectedDetail" @ref="shareModal" />
+                                    <AddEditShares Users=@users ReceiptItem="@selectedDetail" @ref="shareModal" />
 
 
                                 </td>
@@ -275,6 +279,7 @@ else
     private bool showConfirmationClearFormReprocess = false;
 
     private AddEditShares shareModal;
+    private AddEditShares shareModalAll;
 
     private bool isProcessing = false;
 
@@ -313,6 +318,35 @@ else
         else
         {
             await LoadMaster(int.Parse(id));
+        }
+    }
+
+    private void OpenShareModalForAll()
+    {
+        this.selectedDetail = new ReceiptItem();
+        shareModalAll.OpenModal();
+    }
+
+    private async Task ShareModalForAllSave()
+    {
+        if (this.selectedDetail == null)
+        {
+            return;
+        }
+        foreach (var row in master.Items)
+        {
+            row.Shares.Clear();
+            foreach (var share in this.selectedDetail.Shares)
+            {
+                row.Shares.Add(new ReceiptItemShare
+                    {
+                        ReceiptItem = row,
+                        Share = share.Share,
+                        UserName = share.UserName,
+                        UserFullName = share.UserFullName,
+                        UserId = share.UserId
+                    });
+            }
         }
     }
 

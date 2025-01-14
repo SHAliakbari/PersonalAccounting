@@ -16,27 +16,39 @@
                 <div class="modal-body">
                     @foreach (var share in ReceiptItem.Shares)
                     {
-                        <div class="form-group row">
-                            <label class="col-sm-4 col-form-label">User Name:</label>
-                            <div class="col-sm-6">
-                                <input type="text" class="form-control" @bind="share.UserName" />
+                        <div class="row">
+                            <div class="form-group col-sm-7">
+                                <label for="Category">UserName:</label>
+                                <InputSelect @onblur="() => UserNameChanged(share)" @bind-Value="share.UserName" class="form-control" aria-required="true" placeholder="">
+                                    @foreach (var user in ActiveUsers)
+                                    {
+                                        <option value=@user.UserName>@user.UserName - @user.FullName</option>
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="() => share.UserName" class="text-danger" />
                             </div>
-                            <div class="col-sm-2">
+                            <div class="form-group col-sm-3">
+                                <label for="Category">Share (%):</label>
+                                <InputNumber class="form-control" @bind-Value="share.Share" />
+                                <ValidationMessage For="() => share.Share" class="text-danger" />
+                            </div>
+                            <div class="form-group col-sm-2">
                                 <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveShare(share))">-</button>
-                            </div>
-                        </div>
-                        <div class="form-group row">
-                            <label class="col-sm-4 col-form-label">Share (%):</label>
-                            <div class="col-sm-8">
-                                <input type="number" class="form-control" @bind="share.Share" min="0" max="100" />
                             </div>
                         </div>
                     }
                     <button type="button" class="btn btn-primary btn-sm" @onclick="AddShare">Add Share</button>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
-
+                    @if (IsForAll)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="SaveShares">SaveShares</button>
+                    }
+                    <div>
+                        @Error
+                    </div>
                 </div>
             </div>
         </div>
@@ -49,6 +61,8 @@
 }
 
 @code {
+    private List<ApplicationUser> ActiveUsers => this.Users.Where(x => x.EmailConfirmed).ToList();
+
     [Parameter]
     public ReceiptItem ReceiptItem { get; set; }
 
@@ -57,6 +71,11 @@
 
     [Parameter]
     public EventCallback OnSharesSaved { get; set; }
+
+    [Parameter]
+    public bool IsForAll { get; set; } = false;
+
+    private string Error = "";
 
     public bool ShowModal { get; set; }
 
@@ -80,15 +99,27 @@
         ReceiptItem.Shares.Remove(shareToRemove);
     }
 
-   
+    private void UserNameChanged(ReceiptItemShare share)
+    {
+        if (share.UserName != null)
+        {
+            var selectedUser = Users.FirstOrDefault(x => x.UserName == share.UserName);
+            if (selectedUser != null)
+            {
+                share.UserFullName = selectedUser.FullName;
+                share.UserId = selectedUser.Id;
+            }
+        }
+    }
 
     private async Task SaveShares()
     {
+        Error = "";
         //Validate total share
         if (ReceiptItem.Shares.Sum(s => s.Share) != 100)
         {
             //Show error message or handle validation in a proper way
-            Console.WriteLine("Total share must be 100%");
+            Error = "Total share must be 100%";
             return;
         }
         await OnSharesSaved.InvokeAsync();
