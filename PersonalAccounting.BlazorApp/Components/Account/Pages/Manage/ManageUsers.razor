@@ -80,6 +80,11 @@
                     <InputCheckbox id="EmailConfirmed" @bind-Value="User.EmailConfirmed" />
                 </div>
 
+                <div class="form-group">
+                    <label for="InviteCode">InviteCode</label>
+                    <InputText id="InviteCode" class="form-control" @bind-Value="User.InviteCode" />
+                </div>
+
                 <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
             <hr />
