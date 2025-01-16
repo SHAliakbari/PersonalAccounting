@@ -88,12 +88,16 @@ else
                 <PropertyColumn Property="@(c => c.PaidByUserFullName)" Sortable="true" Title="PayedByUserFullName" />
                 <TemplateColumn Title="Actions">
                     <div class="@GetRowClass(context)">
-                        <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
-                        @if (isAdmin)
-                        {
-                            <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
-                        }
-                        <small>@GetShareContent(context)</small>
+                        <div>
+                            <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+                            @if (isAdmin)
+                            {
+                                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
+                            }
+                        </div>
+                        <div>
+                            <small>@GetShareContent(context)</small>
+                        </div>
                     </div>
                 </TemplateColumn>
             </QuickGrid>

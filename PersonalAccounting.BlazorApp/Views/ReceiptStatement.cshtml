@@ -1,0 +1,78 @@
+@using System.Globalization;
+@using System.Web
+@model PersonalAccounting.Domain.Reports.ReceiptsStatementModel
+<html>
+<head>
+</head>
+<body>
+    <h1>Statement - @DateTime.Now.ToShortDateString() - @Model.UserName</h1>
+    <style>
+        .grid {
+            margin-top: 5px;
+        }
+
+            .grid .transfersList {
+                width: 100%;
+                font-size: 14px !important;
+            }
+
+                .grid .transfersList td, .grid .transfersList th {
+                    border: 1px solid gray;
+                }
+
+                /* Stripe effect */
+                .grid .transfersList tbody tr {
+                    background-color: rgba(0,0,0,0.04);
+                }
+
+                    .grid .transfersList tbody tr:nth-child(even) {
+                        background: rgba(255,255,255,0.4);
+                    }
+
+                    .grid .transfersList tbody tr td {
+                        padding: 4px;
+                        font-size: 14px !important;
+                    }
+
+    </style>
+    <div class="grid">
+        <table class="transfersList" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <th>MerchantName</th>
+                    <th>ShopName</th>
+                    <th>ReceiptDate</th>
+                    <th>PaidByUserName</th>
+                    <th>TotalReceiptAmount</th>
+                    <th>UserPaid</th>
+                    <th>UserOwed</th>
+                    <th>Balance</th>
+                    <th>RunningTotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.ReceiptReportItems)
+                {
+                    <tr>
+                        <td>@item.MerchantName</td>
+                        <td>@item.ShopName</td>
+                        <td>@item.ReceiptDate</td>
+                        <td>@item.PaidByUserName</td>
+                        <td>@item.TotalReceiptAmount.ToString("N2")</td>
+                        <td>@item.UserPaid.ToString("N2")</td>
+                        <td>@item.UserOwed.ToString("N2")</td>
+                        <td>@item.Balance.ToString("N2")</td>
+                        <td>@item.RunningTotal.ToString("N2")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6" style="text-align:right">Total </td>
+                    <td><b>@Model.ReceiptReportItems.LastOrDefault()?.RunningTotal.ToString("##,##.##")</b></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</body>
+</html>

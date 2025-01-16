@@ -8,6 +8,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Microsoft.Data.Sqlite;
 using PersonalAccounting.Domain.Reports;
+using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services;
 
 
 
@@ -21,13 +22,15 @@ namespace PersonalAccounting.BlazorApp.Services
         private readonly ILogger<BotService> logger;
         private readonly IWebHostEnvironment webHostEnvironment;
         private readonly HtmlGenerator htmlGenerator;
+        private readonly ReceiptService receiptService;
 
         public BotService(ITelegramBotClient telegramBotClient,
             ApplicationDbContext dbContext,
             UserManager<ApplicationUser> userManager,
             ILogger<BotService> logger,
             IWebHostEnvironment webHostEnvironment,
-            HtmlGenerator htmlGenerator
+            HtmlGenerator htmlGenerator,
+            ReceiptService receiptService
             )
         {
             this.telegramBotClient=telegramBotClient;
@@ -36,6 +39,7 @@ namespace PersonalAccounting.BlazorApp.Services
             this.logger=logger;
             this.webHostEnvironment=webHostEnvironment;
             this.htmlGenerator=htmlGenerator;
+            this.receiptService=receiptService;
         }
 
         public void Dispose()
@@ -131,13 +135,36 @@ namespace PersonalAccounting.BlazorApp.Services
                         //await telegramBotClient.SendTextMessageAsync(msg.Chat, text);
                         string fileName = $"Report - {DateOnly.FromDateTime(DateTime.Now).ConvertToPersianCalendar()} - {userName}.html";
                         using MemoryStream fileStream = new MemoryStream(html);
-                        await telegramBotClient.MakeRequestAsync(
+                        await telegramBotClient.SendRequest(
                             new Telegram.Bot.Requests.SendDocumentRequest()
                             {
                                 ChatId =  msg.Chat.Id,
                                 Document =  new Telegram.Bot.Types.InputFileStream(fileStream, fileName),
                                 Caption = fileName,
                             });
+                    }
+
+                    if (msg.Text.ToLower().Trim().StartsWith("/receipts_report"))
+                    {
+                        if (msg.Text.Length <=8)
+                        {
+                            await telegramBotClient.SendMessage(msg.Chat, "no username");
+                            return;
+                        }
+                        var parts = msg.Text.ToLower().Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length != 2)
+                        {
+                            await telegramBotClient.SendMessage(msg.Chat, "no username");
+                            return;
+                        }
+                        var userName = parts[1];
+                        if (string.IsNullOrEmpty(userName))
+                        {
+                            await telegramBotClient.SendMessage(msg.Chat, "no username");
+                            return;
+                        }
+
+                        await GenerateReceiptReport(msg.Chat.Id, userName, DateTime.MinValue, DateTime.MaxValue);
                     }
                 }
 
@@ -148,7 +175,7 @@ namespace PersonalAccounting.BlazorApp.Services
                     var html = await GenerateReport(items);
                     string fileName = $"Report - {DateOnly.FromDateTime(DateTime.Now).ConvertToPersianCalendar()} - {user.Email}.html";
                     using MemoryStream fileStream = new MemoryStream(html);
-                    await telegramBotClient.MakeRequestAsync(
+                    await telegramBotClient.SendRequest(
                         new Telegram.Bot.Requests.SendDocumentRequest()
                         {
                             ChatId =  msg.Chat.Id,
@@ -157,6 +184,10 @@ namespace PersonalAccounting.BlazorApp.Services
                         });
 
                     //await telegramBotClient.SendTextMessageAsync(msg.Chat, text);
+                }
+                if (msg.Text.ToLower().Trim() == "/receipts_report")
+                {
+                    await GenerateReceiptReport(msg.Chat.Id, user.UserName, DateTime.MinValue, DateTime.MaxValue);
                 }
                 else if (msg.Text.ToLower().Trim().StartsWith("/echo"))
                 {
@@ -182,26 +213,37 @@ namespace PersonalAccounting.BlazorApp.Services
         private async Task<byte[]> GenerateReport(List<TransferRequest> transferRequests, bool includeDesc = false)
         {
 
-            var res = await htmlGenerator.RenderAndExport(@"Statement.razor", new StatementModel()
+            var res = await htmlGenerator.RenderAndExport(@"Statement.cshtml", new StatementModel()
             {
                 Requests = transferRequests
             });
 
             return System.Text.ASCIIEncoding.UTF8.GetBytes(res);
+        }
 
+        private async Task GenerateReceiptReport(ChatId chatId, string userName, DateTime startDate, DateTime endDate)
+        {
+            var items = await receiptService.GenerateReportAsync(userName, DateTime.MinValue, DateTime.MaxValue);
 
-            //StringBuilder stringBuilder = new StringBuilder();
-            //foreach (var transferRequest in transferRequests)
-            //{
-            //    stringBuilder.AppendLine($"Date : {transferRequest.RequestDate} = {transferRequest.RequestDate.ConvertToPersianCalendar()}");
-            //    stringBuilder.AppendLine($"Amount : {((transferRequest.Debit > 0 ? 1 : -1)*transferRequest.DestinationAmount).ToString("##,##")}");
-            //    stringBuilder.AppendLine($"Remaining : {(transferRequest.RunningTotal != 0 ? transferRequest.RunningTotal.ToString("##,##") : 0)} ");
-            //    if (includeDesc && !string.IsNullOrEmpty(transferRequest.ReceiverNote))
-            //        stringBuilder.AppendLine($"Note : {transferRequest.ReceiverNote} ");
-            //    stringBuilder.AppendLine("------------");
-            //}
+            var res = await htmlGenerator.RenderAndExport(@"ReceiptStatement.cshtml", new ReceiptsStatementModel()
+            {
+                ReceiptReportItems = items,
+                UserName = userName,
+                StartDate = startDate,
+                EndDate = endDate
+            });
 
-            //return stringBuilder.ToString();
+            var rpt = System.Text.ASCIIEncoding.UTF8.GetBytes(res);
+
+            string fileName = $"Receipts Report - {DateOnly.FromDateTime(DateTime.Now)} - {userName}.html";
+            using MemoryStream fileStream = new MemoryStream(rpt);
+            await telegramBotClient.SendRequest(
+                new Telegram.Bot.Requests.SendDocumentRequest()
+                {
+                    ChatId = chatId,
+                    Document =  new Telegram.Bot.Types.InputFileStream(fileStream, fileName),
+                    Caption = fileName,
+                });
         }
 
         public async Task<byte[]?> DownloadZippedFile(string filePath, string zipFileName)

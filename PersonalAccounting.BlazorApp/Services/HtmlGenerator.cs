@@ -16,7 +16,7 @@ namespace PersonalAccounting.BlazorApp.Services
         {
             //var path = System.IO.Path.Combine(webHostEnvironment.ContentRootPath, "components", "Reports", reportName);
 
-            var res = await RazorTemplateEngine.RenderAsync("~/Views/Statement.cshtml", model);
+            var res = await RazorTemplateEngine.RenderAsync($"~/Views/{reportName}", model);
 
             //var exists = System.IO.File.Exists(path);
             //var res = await razorViewRenderer.RenderAsync(path, model);
