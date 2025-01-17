@@ -27,6 +27,8 @@ namespace PersonalAccounting.Domain.Data
         [Required]
         public decimal TotalAmount { get; set; }
 
+        public decimal AdditionDeduction { get; set; } = 0;
+
         public string PaidByUserId { get; set; } = string.Empty;
 
         public string PaidByUserName { get; set; } = string.Empty;

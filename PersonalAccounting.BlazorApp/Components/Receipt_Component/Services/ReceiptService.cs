@@ -10,8 +10,10 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
         public string MerchantName { get; set; } = string.Empty;
         public string ShopName { get; set; } = string.Empty;
         public string PaidByUserName { get; set; }
+        public int NumberOfSharees { get; set; }
         public decimal TotalReceiptAmount { get; set; }
         public decimal UserPaid { get; set; }
+        public decimal AdditionDeduction { get; set; }
         public decimal UserOwed { get; set; }
         public decimal Balance { get; set; }
         public decimal RunningTotal { get; set; } // New property for running total
@@ -52,6 +54,16 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
             return result;
         }
 
+        public async Task UpdateAdditionDeduction()
+        {
+            var receipts = await _context.Receipts.Include(x => x.Items).ThenInclude(i => i.Shares).ToListAsync();
+            foreach (var receipt in receipts)
+            {
+                receipt.AdditionDeduction = receipt.TotalAmount - receipt.Items.Sum(x => x.TotalPrice);
+            }
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<ReceiptReportItem>> GenerateReportAsync(string userName, DateTime startDate, DateTime endDate)
         {
             var relatdReceipts = await _context.Receipts
@@ -67,12 +79,14 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
             .Select(r => new
             {
                 ReceiptId = r.Id,
-                ReceiptDate = r.Date,
+                ReceiptDate = r.Date.Date + r.Time,
                 PaidByUserName = r.PaidByUserName,
                 TotalReceiptAmount = r.TotalAmount, // Total of the receipt
                 UserPaid = r.PaidByUserName == userName ? r.TotalAmount : 0,
+                AdditionDeduction = r.AdditionDeduction,
                 MerchantName = r.MerchantName,
                 ShopName = r.ShopName,
+                NumberOfSharees = r.Items.SelectMany(i => i.Shares.Select(x => x.UserName)).Distinct().Count(),
                 Items = r.Items.Select(ri => new
                 {
                     Description = ri.Description,
@@ -89,7 +103,9 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
                 ShopName = rd.ShopName,
                 ReceiptDate = rd.ReceiptDate,
                 PaidByUserName = rd.PaidByUserName,
+                NumberOfSharees = rd.NumberOfSharees,
                 TotalReceiptAmount = rd.TotalReceiptAmount,
+                AdditionDeduction = rd.AdditionDeduction,
                 UserPaid = rd.UserPaid,
                 UserOwed = rd.Items.Sum(i => i.UserShare),
                 Balance = rd.UserPaid - rd.Items.Sum(i => i.UserShare),
@@ -99,14 +115,21 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
                     TotalPrice = i.TotalPrice,
                     UserShare = i.UserShare
                 }).ToList()
-            }).ToList();
+            }).OrderBy(x => x.ReceiptDate).ToList();
+
+
 
             decimal runningTotal = 0; // Initialize running total
 
-            foreach (var item in reportItems)
+
+            foreach (var receipt in reportItems)
             {
-                runningTotal += item.Balance; // Add the current balance to the running total
-                item.RunningTotal = runningTotal; // Set the RunningTotal property
+                int numberOfUsers = receipt.NumberOfSharees;
+                decimal sharedAdditionDeductionPerUser = numberOfUsers > 0 ? receipt.AdditionDeduction / numberOfUsers : 0;
+                receipt.UserOwed = receipt.Items.Sum(i => i.UserShare) + sharedAdditionDeductionPerUser;
+                receipt.Balance = receipt.UserPaid - receipt.UserOwed;
+                runningTotal += receipt.Balance;
+                receipt.RunningTotal = runningTotal;
             }
 
             return reportItems;
@@ -114,7 +137,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 
         public async Task<Receipt> GetReceiptById(int id)
         {
-            return await _context.Receipts.Include(r => r.Items).ThenInclude(r=> r.Shares).FirstAsync(r => r.Id == id);
+            return await _context.Receipts.Include(r => r.Items).ThenInclude(r => r.Shares).FirstAsync(r => r.Id == id);
         }
 
         public async Task AddReceipt(Receipt receipt)

@@ -215,6 +215,9 @@ app.MigrateDbContext<ApplicationDbContext>(async (context, services) =>
         item.RequestDate = DateOnly.FromDateTime(item.CreateDate);
     }
     await context.SaveChangesAsync();
+
+    var receiptService = services.GetRequiredService<ReceiptService>();
+    receiptService.UpdateAdditionDeduction().Wait();
 });
 
 app.Run();

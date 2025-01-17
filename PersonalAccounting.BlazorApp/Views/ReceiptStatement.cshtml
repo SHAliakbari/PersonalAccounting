@@ -56,7 +56,7 @@
                     <tr>
                         <td>@item.MerchantName</td>
                         <td>@item.ShopName</td>
-                        <td>@item.ReceiptDate</td>
+                        <td>@item.ReceiptDate.ToString("dd/MM hh:mm")</td>
                         <td>@item.PaidByUserName</td>
                         <td>@item.TotalReceiptAmount.ToString("N2")</td>
                         <td>@item.UserPaid.ToString("N2")</td>
@@ -68,7 +68,7 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="6" style="text-align:right">Total </td>
+                    <td colspan="8" style="text-align:right">Total &nbsp;&nbsp;</td>
                     <td><b>@Model.ReceiptReportItems.LastOrDefault()?.RunningTotal.ToString("##,##.##")</b></td>
                 </tr>
             </tfoot>
