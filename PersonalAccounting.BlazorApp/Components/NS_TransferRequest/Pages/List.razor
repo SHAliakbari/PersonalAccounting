@@ -79,6 +79,7 @@ else
             <PropertyColumn Property="@(c => c.ToUserFullName)" Sortable="true" Title="To" />
             <PropertyColumn Property="@(c => c.ReceiverUserFullName)" Sortable="true" Title="Receiver" />
             <PropertyColumn Property="@(c => $"{((isAdmin && c.SourceCurrencyName != c.DestinationCurrencyName) ? $"{FormatCurrecny(c.SourceAmount,c.SourceCurrencyName)} ~~" : "")} {FormatCurrecny(c.DestinationAmount,c.DestinationCurrencyName)}")" Title="Amount" />
+            <PropertyColumn Property="@(c => c.ReceiverNote)" Sortable="true" Title="Note" />
             <PropertyColumn Property="@(c => c.Status)" Sortable="true" Title="Status" />
             <TemplateColumn Title="Actions">
                 <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
