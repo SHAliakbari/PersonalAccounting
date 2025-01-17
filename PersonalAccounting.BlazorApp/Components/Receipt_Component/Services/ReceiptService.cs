@@ -180,6 +180,8 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
                     });
                 }
             }
+            var totalItemsInReceipt = receipt.Items.Sum(x => x.TotalPrice);
+            receipt.AdditionDeduction = receipt.TotalAmount - totalItemsInReceipt; 
         }
     }
 }
