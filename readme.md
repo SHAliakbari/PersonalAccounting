@@ -1,11 +1,18 @@
 # PersonalAccounting
 
+*Personal expense tracker with detailed transaction management and powerful receipt management, including item-level sharing for accurate expense tracking and financial overview.*
+
+
 PersonalAccounting is a C# Blazor web application built with .NET 8 and SQLite, designed to provide comprehensive tracking of personal finances, especially in scenarios involving multiple parties and complex transactions. Unlike traditional accounting systems that focus on two-sided transactions, PersonalAccounting utilizes a three-sided model, incorporating an "exchange" or intermediary, to provide a more granular view of your financial activities.
 
 ## Key Features
 
 *   **Three-Sided Transaction Model:** Track transactions involving a sender, an exchange (or intermediary), and a receiver. This allows for detailed tracking of money flow through complex scenarios.
 *   **Multi-Currency Support:** Handle transactions involving different currencies for the source and destination, with accurate conversion tracking.
+*   **Receipt Management:**
+    *   Capture and store digital receipts.
+    *   **Item-Level Sharing:** Share individual items from a receipt with others, simplifying expense splitting and reimbursements.
+    *   Track who paid for the receipt.
 *   **Fee Management:** Account for transaction fees, which can be deducted from either the source or destination currency.
 *   **Detailed Audit Trails:** Maintain a complete history of all transactions, providing a clear and auditable record for tax purposes, dispute resolution, or personal record-keeping.
 *   **User Management:** Each party involved in a transaction can have a dedicated user account, allowing them to log in and view their specific transaction history.
@@ -19,6 +26,7 @@ PersonalAccounting is a C# Blazor web application built with .NET 8 and SQLite, 
 PersonalAccounting is particularly useful for:
 
 *   **Tracking Remittances:** Monitor international money transfers involving multiple intermediaries, ensuring you know exactly where your money is and how much you've paid in fees.
+*   **Shared Expenses:** Easily manage shared expenses with friends, family, or roommates using the item-level receipt sharing feature.
 *   **Managing Complex Financial Relationships with Third Parties:** Track transactions involving multiple entities, providing a transparent and auditable record of all financial interactions.
 *   **Detailed Financial Record-Keeping:** Maintain meticulous records for legal, tax, or personal reasons, with a clear audit trail of all transactions.
 
