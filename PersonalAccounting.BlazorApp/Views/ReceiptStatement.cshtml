@@ -68,7 +68,11 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="8" style="text-align:right">Total &nbsp;&nbsp;</td>
+                    <td colspan="4" style="text-align:right">Total &nbsp;&nbsp;</td>
+                    <td><b>@Model.ReceiptReportItems.Sum(x => x.TotalReceiptAmount).ToString("##,##.##")</b></td>
+                    <td><b>@Model.ReceiptReportItems.Sum(x => x.UserPaid).ToString("##,##.##")</b></td>
+                    <td><b>@Model.ReceiptReportItems.Sum(x => x.UserOwed).ToString("##,##.##")</b></td>
+                    <td><b>@Model.ReceiptReportItems.Sum(x => x.Balance).ToString("##,##.##")</b></td>
                     <td><b>@Model.ReceiptReportItems.LastOrDefault()?.RunningTotal.ToString("##,##.##")</b></td>
                 </tr>
             </tfoot>

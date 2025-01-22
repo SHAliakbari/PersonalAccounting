@@ -16,7 +16,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
         public decimal AdditionDeduction { get; set; }
         public decimal UserOwed { get; set; }
         public decimal Balance { get; set; }
-        public decimal RunningTotal { get; set; } // New property for running total
+        public decimal RunningTotal { get; set; } 
         public List<ItemReportItem> Items { get; set; }
     }
 
@@ -29,7 +29,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 
     public class ReceiptService
     {
-        private readonly ApplicationDbContext _context; // Replace YourDbContext with your actual DbContext
+        private readonly ApplicationDbContext _context; 
 
         public ReceiptService(ApplicationDbContext context)
         {

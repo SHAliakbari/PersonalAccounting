@@ -69,7 +69,7 @@
                     <label for="CardNo">CardNo</label>
                     <InputText id="CardNo" class="form-control" @bind-Value="User.CardNo" />
                 </div>
-              
+
                 <div class="form-group">
                     <label for="TelegramUser">TelegramUser</label>
                     <InputText id="TelegramUser" class="form-control" @bind-Value="User.TelegramUser" />
@@ -89,7 +89,6 @@
                     <label for="Is">IsInviteUsed</label>
                     <InputCheckbox id="IsInviteUsed" @bind-Value="User.IsInviteUsed" />
                 </div>
-
                 <button type="submit" class="btn btn-primary">Save</button>
             </EditForm>
             <hr />
@@ -172,6 +171,7 @@
         else
         {
             // Update an existing user
+            User.LockoutEnd = null;
             User.UpdateDate = DateTime.UtcNow;
             result = await UserManager.UpdateAsync(User);
         }
