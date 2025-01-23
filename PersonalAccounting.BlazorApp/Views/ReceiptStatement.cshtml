@@ -35,6 +35,18 @@
                     }
 
     </style>
+    <div>
+        <h3>Declerations</h3>
+        <hr />
+        <ul>
+            <li>TotalReceiptAmount : <i>Total amount of recipt</i></li>
+            <li>UserPaid : <i>Total amount that current user paid in current receipt</i></li>
+            <li>UserOwed : <i>Total amount that current user owe to payer of current receipt</i></li>
+            <li>Balance : <i>user balance in current receipt</i></li>
+            <li>RunningTotal : <i>Summary from beginning until now</i></li>
+        </ul>
+        <hr />
+    </div>
     <div class="grid">
         <table class="transfersList" cellspacing="0" cellpadding="0">
             <thead>
@@ -43,11 +55,11 @@
                     <th>ShopName</th>
                     <th>ReceiptDate</th>
                     <th>PaidByUserName</th>
-                    <th>TotalReceiptAmount</th>
-                    <th>UserPaid</th>
-                    <th>UserOwed</th>
-                    <th>Balance</th>
-                    <th>RunningTotal</th>
+                    <th title="Total amount of recipt">TotalReceiptAmount</th>
+                    <th title="Total amount that current user paid in current receipt">UserPaid</th>
+                    <th title="Total amount that current user owe to payer of current receipt">UserOwed</th>
+                    <th title="user balance in current receipt">Balance</th>
+                    <th title="Summary from beginning until now">RunningTotal</th>
                 </tr>
             </thead>
             <tbody>
