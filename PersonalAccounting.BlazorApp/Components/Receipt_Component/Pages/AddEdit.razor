@@ -206,7 +206,7 @@ else
                             {
                                 <td colspan="8">
                                     <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                                                OnEditCancelled="CancelNewDetail"></AddEditRow>
+                                    OnEditCancelled="CancelNewDetail"></AddEditRow>
                                 </td>
                             }
                             else
@@ -237,7 +237,7 @@ else
             @if (isDetailNew && detail != null)
             {
                 <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                            OnEditCancelled="CancelNewDetail"></AddEditRow>
+                OnEditCancelled="CancelNewDetail"></AddEditRow>
             }
         </div>
 
@@ -513,7 +513,15 @@ else
                     // if (thumbnail != null)
                     //     thumbnail.Save(thumbnailStream, System.Drawing.Imaging.ImageFormat.Png);
                 }
-                var fileName = await blobService.Upload(file.Name, memoryStream.ToArray());
+                var readyToUpload = GetBlackWhiteImage(memoryStream);
+
+                if (readyToUpload.Length > (4 * 1024 * 1024)) // > 4MB
+                {
+                    uploadStatus = $"File is too large - Max(4MB) - Now({readyToUpload.Length})";
+                    return;
+                }
+
+                var fileName = await blobService.Upload(file.Name, readyToUpload);
 
                 master.Thumbnail = thumbnail;
                 master.ImageFileName = fileName;
@@ -526,6 +534,29 @@ else
         catch (Exception ex)
         {
             logger.LogError(ex, "Upload Method");
+            throw;
+        }
+    }
+
+    private byte[] GetBlackWhiteImage(Stream resourceImage)
+    {
+        try
+        {
+            resourceImage.Seek(0, SeekOrigin.Begin);
+            using MemoryStream memoryStream = new MemoryStream();
+            using (Image image = Image.Load(resourceImage))
+            {
+                image.Mutate(x => x
+                    .Grayscale()
+                    .BinaryThreshold(0.5f));
+                image.Save(memoryStream, SixLabors.ImageSharp.Formats.Png.PngFormat.Instance); // Automatic encoder selected based on extension.
+            }
+
+            return memoryStream.ToArray();
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "GetReducedImage");
             throw;
         }
     }
