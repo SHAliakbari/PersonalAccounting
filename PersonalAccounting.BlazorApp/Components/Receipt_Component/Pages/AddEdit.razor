@@ -16,6 +16,7 @@
 @using SixLabors.ImageSharp.PixelFormats
 @using SixLabors.ImageSharp.Processing
 @using System.Text.Json
+@using System.Text
 
 <PageTitle>@(isNew ? "New" : "Edit") Receipt</PageTitle>
 
@@ -206,7 +207,7 @@ else
                             {
                                 <td colspan="8">
                                     <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                                    OnEditCancelled="CancelNewDetail"></AddEditRow>
+                                                OnEditCancelled="CancelNewDetail"></AddEditRow>
                                 </td>
                             }
                             else
@@ -227,6 +228,9 @@ else
 
                                     <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModal(detail))">Manage Shares</button>
                                     <AddEditShares IsReadOnly=!isAdmin Users=@users ReceiptItem="@selectedDetail" @ref="shareModal" />
+                                    <div>
+                                        <small>@GetShareContent(detail)</small>
+                                    </div>
                                 </td>
                             }
                         </tr>
@@ -237,7 +241,7 @@ else
             @if (isDetailNew && detail != null)
             {
                 <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                OnEditCancelled="CancelNewDetail"></AddEditRow>
+                            OnEditCancelled="CancelNewDetail"></AddEditRow>
             }
         </div>
 
@@ -297,6 +301,7 @@ else
 
     private string PaidUserClassName = string.Empty;
 
+    List<UserSymbol> usersSymbol = new List<UserSymbol>();
 
     private bool isNew { get; set; }
 
@@ -588,6 +593,29 @@ else
     {
         master = await Service.GetReceiptById(id);
         isReceiptImageUploaded = false;
+
+        master.Items.SelectMany(x => x.Shares.Select(x => x.UserName)).Distinct()
+       .ToList().ForEach(x =>
+       {
+           if (!usersSymbol.Any(userSymbol => userSymbol.UserName == x))
+           {
+               usersSymbol.Add(new UserSymbol { UserName = x, Symbol = x.Substring(0, 2).ToUpper(), Style = UserSymbol.Styles[usersSymbol.Count] });
+           }
+       });
+    }
+
+    private MarkupString GetShareContent(ReceiptItem item)
+    {
+        StringBuilder builder1 = new StringBuilder();
+
+        foreach (var share in item.Shares)
+        {
+            var userSymbol = usersSymbol.First(x => x.UserName == share.UserName);
+
+            builder1.AppendLine($"<span class=\"badge {userSymbol.Style}\" title=\"{share.UserName}\">{(share.Share * item.TotalPrice / 100).ToString("##,##.##")}</span>");
+        }
+
+        return new MarkupString(builder1.ToString());
     }
 
     public async Task HandleSubmit(EditContext editContext)

@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using PersonalAccounting.BlazorApp.Components.Account
+@using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 @using PersonalAccounting.Domain.Data
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using System.Text.Json
@@ -137,26 +138,6 @@ else
     private bool showConfirmation = false;
     private int selectedId;
 
-    string[] styles = new string[]
-    {
-        "bg-primary",
-        "bg-secondary",
-        "bg-success",
-        "bg-danger",
-        "bg-warning",
-        "bg-info",
-        "bg-light",
-        "bg-dark"
-
-    };
-
-    record UserSymbol
-    {
-        public string UserName { get; set; }
-        public string Symbol { get; set; }
-        public string Style { get; set; }
-    }
-
     List<UserSymbol> usersSymbol = new List<UserSymbol>();
 
     bool isAdmin = false;
@@ -213,7 +194,7 @@ else
         {
             if (!usersSymbol.Any(userSymbol => userSymbol.UserName == x))
             {
-                usersSymbol.Add(new UserSymbol { UserName = x, Symbol = x.Substring(0, 2).ToUpper(), Style = styles[usersSymbol.Count] });
+                usersSymbol.Add(new UserSymbol { UserName = x, Symbol = x.Substring(0, 2).ToUpper(), Style = UserSymbol.Styles[usersSymbol.Count] });
             }
         });
 
