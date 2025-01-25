@@ -436,12 +436,8 @@ else
 
         using (var stream = new MemoryStream(file))
         {
-            // MemoryStream finalizedImage = new MemoryStream();
-            // ImagePreprocessor.PreprocessImage(stream, ref finalizedImage);
-            // var content = service.ExtractTextFromImage(finalizedImage.ToArray());
-
-
             await formRecognizerService.ExtractReceiptInfo(stream, master);
+            Service.FillEmptyCategories(master);
             uploadStatus = "Processed . Check the form info";
             isProcessing = false;
             isReceiptImageUploaded = false;

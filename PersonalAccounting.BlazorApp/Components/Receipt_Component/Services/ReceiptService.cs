@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PersonalAccounting.Domain.Data;
+using PersonalAccounting.Domain.Services;
 
 namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 {
@@ -182,6 +183,18 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
             }
             var totalItemsInReceipt = receipt.Items.Sum(x => x.TotalPrice);
             receipt.AdditionDeduction = receipt.TotalAmount - totalItemsInReceipt;
+        }
+
+        public void FillEmptyCategories(Receipt receipt)
+        {
+            List<ReceiptItem> existingItems = _context.ReceiptItems.Where(r => !string.IsNullOrEmpty(r.Category)).ToList();
+            CategoryDetector detector = new CategoryDetector(existingItems);
+
+            var items = receipt.Items.Where(x => string.IsNullOrEmpty(x.Category));
+            foreach (var item in items)
+            {
+                item.Category = detector.DetectCategory(item.Description);
+            }
         }
     }
 }
