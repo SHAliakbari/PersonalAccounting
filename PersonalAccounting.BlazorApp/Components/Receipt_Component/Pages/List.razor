@@ -206,7 +206,7 @@ else
         var user = await UserAccessor.GetRequiredUserAsync(HttpContextAccessor.HttpContext!);
         isAdmin = await UserManager.IsInRoleAsync(user, "admin");
 
-        var res = await Service.GetAllReceipts(user.UserName);
+        var res = await Service.GetAllReceipts(isAdmin ? "" : user.UserName);
 
         res.SelectMany(x => x.Items.SelectMany(x => x.Shares.Select(x => x.UserName))).Distinct()
         .ToList().ForEach(x =>
