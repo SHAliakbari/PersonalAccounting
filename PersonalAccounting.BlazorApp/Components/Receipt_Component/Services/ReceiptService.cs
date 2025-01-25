@@ -16,7 +16,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
         public decimal AdditionDeduction { get; set; }
         public decimal UserOwed { get; set; }
         public decimal Balance { get; set; }
-        public decimal RunningTotal { get; set; } 
+        public decimal RunningTotal { get; set; }
         public List<ItemReportItem> Items { get; set; }
     }
 
@@ -29,7 +29,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
 
     public class ReceiptService
     {
-        private readonly ApplicationDbContext _context; 
+        private readonly ApplicationDbContext _context;
 
         public ReceiptService(ApplicationDbContext context)
         {
@@ -39,7 +39,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
         public async Task<IEnumerable<Receipt>> GetAllReceipts(string userName)
         {
             IQueryable<Receipt> query = _context.Receipts;
-            if (userName != null)
+            if (!string.IsNullOrEmpty(userName))
             {
                 query = query.Where(r => r.PaidByUserName == userName || r.Items.Any(ri => ri.Shares.Any(s => s.UserName == userName)));
             }
@@ -181,7 +181,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
                 }
             }
             var totalItemsInReceipt = receipt.Items.Sum(x => x.TotalPrice);
-            receipt.AdditionDeduction = receipt.TotalAmount - totalItemsInReceipt; 
+            receipt.AdditionDeduction = receipt.TotalAmount - totalItemsInReceipt;
         }
     }
 }
