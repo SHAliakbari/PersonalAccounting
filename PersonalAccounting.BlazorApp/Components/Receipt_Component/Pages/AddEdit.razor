@@ -207,7 +207,7 @@ else
                             {
                                 <td colspan="8">
                                     <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                                                OnEditCancelled="CancelNewDetail"></AddEditRow>
+                                    OnEditCancelled="CancelNewDetail"></AddEditRow>
                                 </td>
                             }
                             else
@@ -241,7 +241,7 @@ else
             @if (isDetailNew && detail != null)
             {
                 <AddEditRow detail="detail" IsNew="isDetailNew" OnItemSaved="HandleDetailSubmit"
-                            OnEditCancelled="CancelNewDetail"></AddEditRow>
+                OnEditCancelled="CancelNewDetail"></AddEditRow>
             }
         </div>
 
@@ -606,7 +606,8 @@ else
 
         foreach (var share in item.Shares)
         {
-            var userSymbol = usersSymbol.First(x => x.UserName == share.UserName);
+            var userSymbol = usersSymbol.FirstOrDefault(x => x.UserName == share.UserName);
+            if (userSymbol == null) continue;
 
             builder1.AppendLine($"<span class=\"badge {userSymbol.Style}\" title=\"{share.UserName}\">{(share.Share * item.TotalPrice / 100).ToString("##,##.##")}</span>");
         }
