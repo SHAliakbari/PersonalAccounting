@@ -45,7 +45,7 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
                 query = query.Where(r => r.PaidByUserName == userName || r.Items.Any(ri => ri.Shares.Any(s => s.UserName == userName)));
             }
 
-            var result = await query.Include(r => r.Items).ThenInclude(r => r.Shares).AsNoTracking().ToListAsync();
+            var result = await query.Include(r => r.Items).ThenInclude(r => r.Shares).OrderByDescending(x => x.Date).AsNoTracking().ToListAsync();
 
             foreach (var item in result)
             {

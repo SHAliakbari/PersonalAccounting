@@ -178,12 +178,19 @@ else
         <hr />
         <h2>Details</h2>
         <div class="text-end">
+            <div style="display:inline-block">
+                @foreach (var item in usersSymbol)
+                {
+                    <span class=@($"badge {item.Style}")>@item.UserName</span>
+                }
+            </div> &nbsp;
             @if (isAdmin)
             {
                 <button type="button" @onclick="NewDetail" class="btn btn-success btn-sm">
                     New Detail
                 </button>
             }
+            
         </div>
         <div class="grid">
             <table class="details">

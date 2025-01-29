@@ -3,6 +3,11 @@
 @model PersonalAccounting.Domain.Reports.ReceiptsStatementModel
 <html>
 <head>
+    <style>
+        td a {
+            color: black;
+        }
+    </style>
 </head>
 <body>
     <h1>Statement - @DateTime.Now.ToShortDateString() - @Model.UserName</h1>
@@ -66,11 +71,11 @@
                 @foreach (var item in Model.ReceiptReportItems)
                 {
                     <tr>
-                        <td>@item.MerchantName</td>
-                        <td>@item.ShopName</td>
-                        <td>@item.ReceiptDate.ToString("dd/MM hh:mm")</td>
-                        <td>@item.PaidByUserName</td>
-                        <td>@item.TotalReceiptAmount.ToString("N2")</td>
+                        <td><a href="https://amirpa.azurewebsites.net/Receipts/Add/@item.ReceiptId">@item.MerchantName</a></td>
+                        <td><a href="https://amirpa.azurewebsites.net/Receipts/Add/@item.ReceiptId">@item.ShopName</a></td>
+                        <td><a href="https://amirpa.azurewebsites.net/Receipts/Add/@item.ReceiptId">@item.ReceiptDate.ToString("dd/MM hh:mm")</a></td>
+                        <td><a href="https://amirpa.azurewebsites.net/Receipts/Add/@item.ReceiptId">@item.PaidByUserName</a></td>
+                        <td><a href="https://amirpa.azurewebsites.net/Receipts/Add/@item.ReceiptId">@item.TotalReceiptAmount.ToString("N2")</a></td>
                         <td>@item.UserPaid.ToString("N2")</td>
                         <td>@item.UserOwed.ToString("N2")</td>
                         <td>@item.Balance.ToString("N2")</td>
