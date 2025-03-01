@@ -152,7 +152,7 @@ namespace PersonalAccounting.BlazorApp.Services
                             return;
                         }
                         var parts = msg.Text.ToLower().Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries);
-                        if (parts.Length != 2)
+                        if (parts.Length < 2)
                         {
                             await telegramBotClient.SendMessage(msg.Chat, "no username");
                             return;
@@ -164,7 +164,13 @@ namespace PersonalAccounting.BlazorApp.Services
                             return;
                         }
 
-                        await GenerateReceiptReport(msg.Chat.Id, userName, DateTime.MinValue, DateTime.MaxValue);
+                        var month = parts.Length>2 ? int.Parse(parts[2]) : DateTime.Now.Month;
+                        
+                        var (startDate, endDate) = GetMonthStartAndEnd(DateTime.Now.Year, month);
+
+
+
+                        await GenerateReceiptReport(msg.Chat.Id, userName, startDate, endDate);
                     }
                 }
 
@@ -223,7 +229,7 @@ namespace PersonalAccounting.BlazorApp.Services
 
         private async Task GenerateReceiptReport(ChatId chatId, string userName, DateTime startDate, DateTime endDate)
         {
-            var items = await receiptService.GenerateReportAsync(userName, DateTime.MinValue, DateTime.MaxValue);
+            var items = await receiptService.GenerateReportAsync(userName, startDate, endDate);
 
             var res = await htmlGenerator.RenderAndExport(@"ReceiptStatement.cshtml", new ReceiptsStatementModel()
             {
@@ -319,6 +325,13 @@ namespace PersonalAccounting.BlazorApp.Services
                 }
 
             }
+        }
+
+        private (DateTime startDate, DateTime endDate) GetMonthStartAndEnd(int year, int month)
+        {
+            var startDate = new DateTime(year, month, 1);
+            var endDate = startDate.AddMonths(1).AddDays(-1);
+            return (startDate, endDate);
         }
     }
 }
