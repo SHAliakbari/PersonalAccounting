@@ -10,8 +10,6 @@ using Microsoft.Data.Sqlite;
 using PersonalAccounting.Domain.Reports;
 using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services;
 
-
-
 namespace PersonalAccounting.BlazorApp.Services
 {
     public class BotService : IDisposable
