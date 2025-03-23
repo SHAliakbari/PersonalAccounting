@@ -193,7 +193,8 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
             var items = receipt.Items.Where(x => string.IsNullOrEmpty(x.Category));
             foreach (var item in items)
             {
-                item.Category = detector.DetectCategory(item.Description);
+                if (!string.IsNullOrEmpty(item.Description))
+                    item.Category = detector.DetectCategory(item.Description);
             }
         }
     }
