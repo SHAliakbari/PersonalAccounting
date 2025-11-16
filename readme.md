@@ -1,51 +1,48 @@
-# PersonalAccounting
+# Personal Accounting: AI-Powered Expense & Receipt Manager
 
-*Personal expense tracker with detailed transaction management and powerful receipt management, including item-level sharing for accurate expense tracking and financial overview.*
+*An intelligent personal expense tracker with AI-powered receipt processing, detailed transaction management, and item-level expense sharing for a complete financial overview.*
 
-
-PersonalAccounting is a C# Blazor web application built with .NET 8 and SQLite, designed to provide comprehensive tracking of personal finances, especially in scenarios involving multiple parties and complex transactions. Unlike traditional accounting systems that focus on two-sided transactions, PersonalAccounting utilizes a three-sided model, incorporating an "exchange" or intermediary, to provide a more granular view of your financial activities.
+PersonalAccounting is a C# Blazor Server application built with .NET 8 and SQLite. It's designed for meticulous tracking of personal and shared finances, leveraging modern technologies like Azure AI to automate and simplify expense management.
 
 ## Key Features
 
-*   **Three-Sided Transaction Model:** Track transactions involving a sender, an exchange (or intermediary), and a receiver. This allows for detailed tracking of money flow through complex scenarios.
-*   **Multi-Currency Support:** Handle transactions involving different currencies for the source and destination, with accurate conversion tracking.
-*   **Receipt Management:**
-    *   Capture and store digital receipts.
-    *   **Item-Level Sharing:** Share individual items from a receipt with others, simplifying expense splitting and reimbursements.
-    *   Track who paid for the receipt.
-*   **Fee Management:** Account for transaction fees, which can be deducted from either the source or destination currency.
-*   **Detailed Audit Trails:** Maintain a complete history of all transactions, providing a clear and auditable record for tax purposes, dispute resolution, or personal record-keeping.
-*   **User Management:** Each party involved in a transaction can have a dedicated user account, allowing them to log in and view their specific transaction history.
-*   **Telegram Integration:** Receive transaction reports, statements, and other notifications via a dedicated Telegram bot, both for administrators and individual users.
-*   **Attachment Support:** Attach multiple files to each transaction, stored securely in Azure Storage, providing additional context and documentation.
-*   **SQLite Database:** Uses a local SQLite database for data storage, ensuring privacy and ease of setup.
-*   **Blazor Web UI:** Provides a responsive and modern web interface for managing your finances.
+*   **Three-Sided Transaction Model:** Track complex transactions involving a sender, an exchange (or intermediary), and a receiver for a granular view of your financial activities.
+*   **Advanced Receipt Management:**
+    *   **AI-Powered OCR:** Uses **Azure AI Document Intelligence** to automatically scan and extract detailed information from uploaded receipts, minimizing manual data entry.
+    *   **Automatic Categorization:** Intelligently assigns categories to receipt items based on historical data, learning from your habits.
+    *   **Item-Level & Full Receipt Sharing:** Easily split costs by sharing individual items from a receipt or the entire bill with other users.
+    *   **Image Processing:** Automatically processes receipt images for optimal OCR results and generates thumbnails for quick reference.
+*   **Comprehensive User Management:**
+    *   Secure, role-based user accounts (Admin and standard users) powered by ASP.NET Core Identity.
+    *   Admin dashboard for managing all users and system settings.
+    *   User profiles with financial details like account/card numbers for easier tracking.
+*   **Interactive Telegram Bot:**
+    *   Receive on-demand financial reports, statements, and notifications directly in Telegram.
+    *   Administrative commands for system maintenance, such as database backup and restore.
+*   **Multi-Currency Support:** Handle transactions across different currencies with clear tracking of conversion rates.
+*   **Secure Cloud Storage:** All attachments and receipt images are securely stored in **Azure Storage**.
+*   **Reporting & Statements:** Generate detailed HTML statements for both transfer requests and receipt expenses.
+*   **Local-First Database:** Uses a local SQLite database for data privacy and ease of setup.
+*   **Modern Web UI:** A responsive and interactive Blazor Server interface for managing your finances.
 
 ## Use Cases
 
-PersonalAccounting is particularly useful for:
-
-*   **Tracking Remittances:** Monitor international money transfers involving multiple intermediaries, ensuring you know exactly where your money is and how much you've paid in fees.
-*   **Shared Expenses:** Easily manage shared expenses with friends, family, or roommates using the item-level receipt sharing feature.
-*   **Managing Complex Financial Relationships with Third Parties:** Track transactions involving multiple entities, providing a transparent and auditable record of all financial interactions.
-*   **Detailed Financial Record-Keeping:** Maintain meticulous records for legal, tax, or personal reasons, with a clear audit trail of all transactions.
-
-**Example:**
-
-A business may use PersonalAccounting to track payments to suppliers through a payment processor. The business (source), the payment processor (exchange), and the supplier (destination) each have user accounts and can access relevant transaction details. Attachments, such as invoices or contracts, can be associated with each transaction. Both the business and the supplier can receive transaction notifications and statements via Telegram.
+*   **Automated Expense Splitting:** Perfect for roommates, families, or group trips. Just upload a receipt, and the app digitizes it, allowing you to split costs item by item.
+*   **Detailed Financial Record-Keeping:** Maintain meticulous, auditable records for taxes or personal budgeting with a clear history of all transactions.
+*   **Tracking Remittances:** Monitor international money transfers involving multiple intermediaries, ensuring you know exactly where your money is and what you've paid in fees.
 
 ## Technology Stack
 
 *   C#
-*   Blazor WebAssembly
 *   .NET 8
+*   Blazor Server
+*   Entity Framework Core
 *   SQLite
-*   Azure Storage
+*   Azure AI Document Intelligence (for OCR)
+*   Azure Storage (for file attachments)
 *   Telegram Bot API
 
 ## Getting Started
-
-To get started with PersonalAccounting, follow these steps:
 
 1.  **Clone the repository:**
     ```bash
@@ -57,75 +54,55 @@ To get started with PersonalAccounting, follow these steps:
     cd PersonalAccounting
     ```
 
-3.  **Restore NuGet packages:**
+3.  **Configure Environment Variables:**
+    Update `launchSettings.json` or your environment provider with the required secrets. See the "Environment Variables" section below.
+
+4.  **Restore NuGet packages:**
     ```bash
     dotnet restore
-    ```
-
-4.  **Build the project:**
-    ```bash
-    dotnet build
     ```
 
 5.  **Run the project:**
     ```bash
     dotnet run --project PersonalAccounting.BlazorApp
     ```
-    Or if you are using docker : 
+    Or if you are using Docker:
     ```bash
     docker-compose up -d
     ```
+    The application will be available at `https://localhost:7103`.
 
-    This will launch the application in your default web browser. The default port is usually `https://localhost:7103`.
+For database migrations, follow the [readme in PersonalAccounting.Domain](PersonalAccounting.Domain/readme.md).
 
-    for new migration follow [readme in PersonalAccounting.Domain](PersonalAccounting.Domain/readme.md)
+### Environment Variables
 
-Note : enviroment variables : 
-
-```bash
+```json
 "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "Authentication_Google_ClientId": "your_client_id",
-        "Authentication_Google_ClientSecret": "your_client-secret_",
+    "ASPNETCORE_ENVIRONMENT": "Development",
 
-        "Authentication_Telegram_BotToken": "your_telegram_bot",
-        "Authentication_Telegram_BotWebhookUrl": "",
+    "Authentication_Google_ClientId": "your_google_client_id",
+    "Authentication_Google_ClientSecret": "your_google_client_secret",
 
-        "EmailConfig_SMTPServer": "smtp.server.com",
-        "EmailConfig_SMTPPort": "587",
-        "EmailConfig_Sender": "your_name_",
-        "EmailConfig_UserName": "username",
-        "EmailConfig_Password": "password",
+    "Authentication_Telegram_BotToken": "your_telegram_bot_token",
+    "Authentication_Telegram_BotWebhookUrl": "your_public_webhook_url_if_not_in_debug",
 
-        "Authentication_MasterEmail": "master_account_@server.com",
+    "EmailConfig_SMTPServer": "smtp.server.com",
+    "EmailConfig_SMTPPort": "587",
+    "EmailConfig_Sender": "Your Name",
+    "EmailConfig_UserName": "your_email_username",
+    "EmailConfig_Password": "your_email_password",
 
-        "AZURE_STORAGE_CONNECTION_STRING": "azure_storage_connection_"
+    "Authentication_MasterEmail": "your_admin_account@server.com",
 
-      }
+    "AZURE_STORAGE_CONNECTION_STRING": "your_azure_storage_connection_string",
+    "AZURE_DOCUMENTAI_ENDPOINT": "your_azure_document_ai_endpoint",
+    "AZURE_DOCUMENTAI_APIKEY": "your_azure_document_ai_api_key"
+}
 ```
 
 ## Contributing
 
-Contributions are welcome! If you'd like to contribute to PersonalAccounting, please follow these guidelines:
-
-1.  **Fork the repository:** Create your own fork of the PersonalAccounting repository.
-
-2.  **Create a branch:** Create a new branch for your feature or bug fix:
-    ```bash
-    git checkout -b feature/your-feature-name
-    ```
-
-3.  **Make your changes:** Implement your changes and commit them with clear and concise commit messages.
-
-4.  **Push to your fork:** Push your changes to your forked repository:
-    ```bash
-    git push origin feature/your-feature-name
-    ```
-
-5.  **Submit a pull request:** Open a pull request on the original PersonalAccounting repository, explaining the changes you've made.
-
-Please ensure your code follows the existing coding style and includes appropriate tests.
-
+Contributions are welcome! Please fork the repository, create a feature branch, and submit a pull request.
 
 ## License
 
@@ -133,26 +110,23 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Future Development
 
-*   Improved reporting and visualization of financial data.
-*   Improve documentation 
+*   Improved reporting and data visualization dashboards.
+*   Enhanced documentation and user guides.
 
-## Detailed Transaction Tracking with Three-Sided Model
+---
 
-PersonalAccounting provides a comprehensive view of your finances with its unique three-sided transaction model. Unlike traditional accounting software focused on sender and receiver, PersonalAccounting incorporates an "exchange" or intermediary party, allowing you to meticulously track complex financial flows.
+## Detailed Feature Previews
 
-The "Transfer Request List" above showcases this functionality:
+### AI-Powered Receipt Processing
+PersonalAccounting transforms receipt management. Simply upload a photo of your receipt, and the system uses Azure AI to read and populate all the details—merchant name, date, time, and every single line item with its price. From there, you can easily share items with other users.
 
-Transaction Overview: 
-![transfer requests](https://github.com/SHAliakbari/PersonalAccounting/blob/master/transfer_requests.png?raw=true)
+![Receipt Details](httpss://user-images.githubusercontent.com/5955502/287002072-93481132-1c5b-4699-855c-7029458f8335.png)
 
-Each row represents a transfer request (transaction) with essential details:
+### Three-Sided Transaction Model
+The application provides a unique, comprehensive view of your finances with its three-sided transaction model. Unlike traditional software, it incorporates an "exchange" or intermediary party, allowing you to meticulously track complex financial flows like international remittances.
 
-* Request Date: Date the transfer was initiated.
-* Source and Destination: See who initiated the transfer ("From") and where the funds are going ("To"). This can include individuals, banks, or exchange services ("Exchange 1" in the example).
-* Receiver: Depending on your workflow, this might be the same as the "To" field or the ultimate recipient if the transfer involves multiple intermediaries.
-* Amount and Currency: View the transferred amount with the corresponding currency. Multi-currency support allows you to track transfers involving different currencies, with conversions displayed as needed (e.g., 2000 CAD converted to 100 M-IRR).
-* Status: Track the current stage of the transfer (e.g., "Done").
+![Transfer Requests](https://github.com/SHAliakbari/PersonalAccounting/blob/master/transfer_requests.png?raw=true)
 
 ## Contact
 
-Email : shaliakbari@gmail.com
+Email: shaliakbari@gmail.com

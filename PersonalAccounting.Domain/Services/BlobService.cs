@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 
 namespace PersonalAccounting.Domain.Services
 {
@@ -14,13 +15,13 @@ namespace PersonalAccounting.Domain.Services
         private readonly ILogger<BlobService> logger;
         BlobServiceClient blobServiceClient;
 
-        public BlobService(ILogger<BlobService> logger)
+        public BlobService(ILogger<BlobService> logger, IConfiguration configuration)
         {
             this.logger=logger;
 
             logger.LogDebug("Constructing blobService");
             // Retrieve the connection string for use with the application. 
-            string connectionString = Environment.GetEnvironmentVariable("AZURE_STORAGE_CONNECTION_STRING")!;
+            string connectionString = configuration["AZURE_STORAGE_CONNECTION_STRING"] ?? throw new InvalidOperationException("AZURE_STORAGE_CONNECTION_STRING is not configured in secrets.json or appsettings.json");
 
             blobServiceClient = new BlobServiceClient(connectionString);
             logger.LogDebug("blobServiceClient created . token ends with " + connectionString.Substring(connectionString.Length - 3));

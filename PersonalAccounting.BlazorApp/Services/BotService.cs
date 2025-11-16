@@ -112,19 +112,19 @@ namespace PersonalAccounting.BlazorApp.Services
                     {
                         if (msg.Text.Length <=8)
                         {
-                            await telegramBotClient.SendTextMessageAsync(msg.Chat, "no username");
+                            await telegramBotClient.SendMessage(msg.Chat, "no username");
                             return;
                         }
                         var parts = msg.Text.ToLower().Trim().Split(" ", StringSplitOptions.RemoveEmptyEntries);
                         if (parts.Length != 3)
                         {
-                            await telegramBotClient.SendTextMessageAsync(msg.Chat, "no username and switch(0,1) for include desc");
+                            await telegramBotClient.SendMessage(msg.Chat, "no username and switch(0,1) for include desc");
                             return;
                         }
                         var userName = parts[1];
                         if (string.IsNullOrEmpty(userName))
                         {
-                            await telegramBotClient.SendTextMessageAsync(msg.Chat, "no username");
+                            await telegramBotClient.SendMessage(msg.Chat, "no username");
                             return;
                         }
                         var items = await dbContext.TransferRequests.Where(x => x.ReceiverUserName.ToLower() == userName || x.ToUserName.ToLower() == userName).ToListAsync();
@@ -195,7 +195,7 @@ namespace PersonalAccounting.BlazorApp.Services
                 }
                 else if (msg.Text.ToLower().Trim().StartsWith("/echo"))
                 {
-                    await telegramBotClient.SendTextMessageAsync(msg.Chat, $"{msg.From} said: {msg.Text.Substring(6).Trim()}");
+                    await telegramBotClient.SendMessage(msg.Chat, $"{msg.From} said: {msg.Text.Substring(6).Trim()}");
                 }
             }
         }

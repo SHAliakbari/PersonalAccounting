@@ -15,6 +15,66 @@
 <body>
     <Routes />
     <script src="_framework/blazor.web.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        window.renderBarChart = function (canvasId, labels, data, datasetLabel) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) {
+                console.error('Canvas element not found:', canvasId);
+                return;
+            }
+
+            // Destroy existing chart if it exists
+            if (window.chartInstances && window.chartInstances[canvasId]) {
+                window.chartInstances[canvasId].destroy();
+            }
+
+            if (!window.chartInstances) {
+                window.chartInstances = {};
+            }
+
+            window.chartInstances[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: datasetLabel,
+                        data: data,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, ticks) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Shared Expenses by Person'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
 </body>
 
 </html>

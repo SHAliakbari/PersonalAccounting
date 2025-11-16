@@ -35,6 +35,11 @@
                         <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> List of Receipts
                     </NavLink>
                 </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="reports/shared-expenses">
+                        <span class="bi bi-bar-chart-line-fill-nav-menu" aria-hidden="true"></span> Shared Expenses Report
+                    </NavLink>
+                </div>
                 @if (context.User.IsInRole("admin"))
                 {
                     <div class="nav-item px-3">

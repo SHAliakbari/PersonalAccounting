@@ -197,5 +197,42 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
                     item.Category = detector.DetectCategory(item.Description);
             }
         }
+
+        public async Task<Dictionary<string, decimal>> GetSharedExpensesPerUser(string userId)
+        {
+            var receipts = await _context.Receipts
+                .Where(r => r.Items.Any(i => i.Shares.Any(s => s.UserId == userId)))
+                .Include(r => r.Items)
+                .ThenInclude(i => i.Shares)
+                .ToListAsync();
+
+            var sharedAmounts = new Dictionary<string, decimal>();
+
+            foreach (var receipt in receipts)
+            {
+                foreach (var item in receipt.Items)
+                {
+                    foreach (var share in item.Shares)
+                    {
+                        if (share.UserId != userId)
+                        {
+                            var amount = item.TotalPrice * (share.Share / 100);
+                            var userName = string.IsNullOrEmpty(share.UserFullName) ? share.UserName : share.UserFullName;
+                            
+                            if (sharedAmounts.ContainsKey(userName))
+                            {
+                                sharedAmounts[userName] += amount;
+                            }
+                            else
+                            {
+                                sharedAmounts.Add(userName, amount);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return sharedAmounts;
+        }
     }
 }

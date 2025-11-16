@@ -1,0 +1,69 @@
+@page "/reports/shared-expenses"
+@using Microsoft.AspNetCore.Components
+@using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
+@using PersonalAccounting.Domain.Data
+@using Microsoft.AspNetCore.Identity
+@using PersonalAccounting.BlazorApp.Components.Account
+@using Microsoft.EntityFrameworkCore
+@using System.Text.Json
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject ReceiptService ReceiptService
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@attribute [Authorize]
+
+<PageTitle>Shared Expenses by Person</PageTitle>
+
+<h1>Shared Expenses by Person</h1>
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <canvas id="sharedExpensesChart"></canvas>
+</div>
+
+@code {
+
+    private ApplicationUser user = default!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadChartData();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var authUser = authState.User;
+        
+        if (authUser.Identity?.IsAuthenticated == true)
+        {
+            user = await UserManager.GetUserAsync(authUser);
+            if (user is null)
+            {
+                throw new InvalidOperationException("Unable to load user.");
+            }
+        }
+    }
+
+    private async Task LoadChartData()
+    {
+        try
+        {
+            var sharedExpenses = await ReceiptService.GetSharedExpensesPerUser(user.Id);
+
+            var labels = sharedExpenses.Keys.ToList();
+            var data = sharedExpenses.Values.Select(v => (double)v).ToList();
+
+            await JSRuntime.InvokeVoidAsync("renderBarChart", "sharedExpensesChart", labels, data, "Shared Expenses Amount");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading chart data: {ex.Message}");
+        }
+    }
+}

@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.AI.FormRecognizer.DocumentAnalysis;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using PersonalAccounting.Domain.Data;
 using System;
 using System.Collections.Generic;
@@ -13,10 +14,12 @@ namespace PersonalAccounting.Domain.Services.OCR
     public class FormRecognizerService
     {
         private readonly ILogger<FormRecognizerService> logger;
+        private readonly IConfiguration configuration;
 
-        public FormRecognizerService(ILogger<FormRecognizerService> logger)
+        public FormRecognizerService(ILogger<FormRecognizerService> logger, IConfiguration configuration)
         {
             this.logger=logger;
+            this.configuration=configuration;
         }
 
         public async Task<Receipt> ExtractReceiptInfo(Stream myBlob, Receipt receipt)
@@ -24,8 +27,8 @@ namespace PersonalAccounting.Domain.Services.OCR
             //log.LogInformation($"Blob trigger function Processed blob\n Name:{name} \n Size: {myBlob.Length} Bytes");
 
             // Form Recognizer setup
-            string endpoint = Environment.GetEnvironmentVariable($"AZURE_DOCUMENTAI_ENDPOINT{GlobalConfigs.ProdSuffix}")!;
-            string apiKey = Environment.GetEnvironmentVariable($"AZURE_DOCUMENTAI_APIKEY{GlobalConfigs.ProdSuffix}")!;
+            string endpoint = configuration[$"AZURE_DOCUMENTAI_ENDPOINT{GlobalConfigs.ProdSuffix}"] ?? throw new InvalidOperationException($"AZURE_DOCUMENTAI_ENDPOINT{GlobalConfigs.ProdSuffix} is not configured in secrets.json or appsettings.json");
+            string apiKey = configuration[$"AZURE_DOCUMENTAI_APIKEY{GlobalConfigs.ProdSuffix}"] ?? throw new InvalidOperationException($"AZURE_DOCUMENTAI_APIKEY{GlobalConfigs.ProdSuffix} is not configured in secrets.json or appsettings.json");
             var credential = new AzureKeyCredential(apiKey);
             var client = new DocumentAnalysisClient(new Uri(endpoint), credential);
 

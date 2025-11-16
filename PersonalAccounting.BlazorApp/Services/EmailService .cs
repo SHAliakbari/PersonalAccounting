@@ -9,14 +9,14 @@ namespace PersonalAccounting.BlazorApp.Services
         private readonly EmailConfig emailConfig;
         private readonly ILogger<EmailService> _logger;
 
-        public EmailService(ILogger<EmailService> logger)
+        public EmailService(ILogger<EmailService> logger, IConfiguration configuration)
         {
             this.emailConfig = new EmailConfig
             {
-                Username = Environment.GetEnvironmentVariable($"EmailConfig_UserName{GlobalConfigs.ProdSuffix}")!,
-                Password= Environment.GetEnvironmentVariable($"EmailConfig_Password{GlobalConfigs.ProdSuffix}")!,
-                Port =int.Parse(Environment.GetEnvironmentVariable($"EmailConfig_SMTPPort{GlobalConfigs.ProdSuffix}")!),
-                SmtpServer = Environment.GetEnvironmentVariable($"EmailConfig_SMTPServer{GlobalConfigs.ProdSuffix}")!
+                Username = configuration[$"EmailConfig_UserName{GlobalConfigs.ProdSuffix}"] ?? throw new InvalidOperationException($"EmailConfig_UserName{GlobalConfigs.ProdSuffix} is not configured in secrets.json or appsettings.json"),
+                Password = configuration[$"EmailConfig_Password{GlobalConfigs.ProdSuffix}"] ?? throw new InvalidOperationException($"EmailConfig_Password{GlobalConfigs.ProdSuffix} is not configured in secrets.json or appsettings.json"),
+                Port = int.Parse(configuration[$"EmailConfig_SMTPPort{GlobalConfigs.ProdSuffix}"] ?? throw new InvalidOperationException($"EmailConfig_SMTPPort{GlobalConfigs.ProdSuffix} is not configured in secrets.json or appsettings.json")),
+                SmtpServer = configuration[$"EmailConfig_SMTPServer{GlobalConfigs.ProdSuffix}"] ?? throw new InvalidOperationException($"EmailConfig_SMTPServer{GlobalConfigs.ProdSuffix} is not configured in secrets.json or appsettings.json")
             };
             _logger = logger;
         }

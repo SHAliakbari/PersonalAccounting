@@ -52,8 +52,8 @@ builder.Logging.AddAzureWebAppDiagnostics();
 //}
 
 
-var token = Environment.GetEnvironmentVariable($"Authentication_Telegram_BotToken{GlobalConfigs.ProdSuffix}");             // set your bot token in appsettings.json
-var webhookUrl = Environment.GetEnvironmentVariable($"Authentication_Telegram_BotWebhookUrl{GlobalConfigs.ProdSuffix}");   // set your bot webhook public url in appsettings.json
+var token = configuration[$"Authentication_Telegram_BotToken{GlobalConfigs.ProdSuffix}"];             // set your bot token in secrets.json or appsettings
+var webhookUrl = configuration[$"Authentication_Telegram_BotWebhookUrl{GlobalConfigs.ProdSuffix}"];   // set your bot webhook public url in secrets.json or appsettings
 
 //#if DEBUG
 
@@ -88,8 +88,8 @@ builder.Services.AddAuthentication(options =>
     })
     .AddGoogle(options =>
     {
-        options.ClientId = Environment.GetEnvironmentVariable($"Authentication_Google_ClientId{GlobalConfigs.ProdSuffix}")!;
-        options.ClientSecret = Environment.GetEnvironmentVariable($"Authentication_Google_ClientSecret{GlobalConfigs.ProdSuffix}")!;
+        options.ClientId = configuration[$"Authentication_Google_ClientId{GlobalConfigs.ProdSuffix}"]!;
+        options.ClientSecret = configuration[$"Authentication_Google_ClientSecret{GlobalConfigs.ProdSuffix}"]!;
     })
     //.AddFacebook(options =>
     //{
@@ -164,7 +164,7 @@ app.UseAntiforgery();
 
 #if DEBUG
 
-await bot.SetWebhook("");
+//await bot.SetWebhook("");
 bot.StartReceiving(updateHandler: new Action<ITelegramBotClient, Update, CancellationToken>(OnUpdateFromPolling), errorHandler: async (bot, ex, ct) =>
 {
     await Task.Run(() => Console.WriteLine(ex));
@@ -202,7 +202,7 @@ app.MigrateDbContext<ApplicationDbContext>(async (context, services) =>
     }
 
     var um = services.GetRequiredService<UserManager<ApplicationUser>>();
-    var masterEmail = Environment.GetEnvironmentVariable($"Authentication_MasterEmail{GlobalConfigs.ProdSuffix}")!;
+    var masterEmail = configuration[$"Authentication_MasterEmail{GlobalConfigs.ProdSuffix}"]!;
     var admin = await um.FindByEmailAsync(masterEmail);
     if (admin != null)
     {
