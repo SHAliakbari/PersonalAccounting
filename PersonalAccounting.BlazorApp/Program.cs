@@ -164,7 +164,7 @@ app.UseAntiforgery();
 
 #if DEBUG
 
-//await bot.SetWebhook("");
+await bot.SetWebhook("");
 bot.StartReceiving(updateHandler: new Action<ITelegramBotClient, Update, CancellationToken>(OnUpdateFromPolling), errorHandler: async (bot, ex, ct) =>
 {
     await Task.Run(() => Console.WriteLine(ex));
@@ -172,7 +172,7 @@ bot.StartReceiving(updateHandler: new Action<ITelegramBotClient, Update, Cancell
 
 #else
 
-await bot.SetWebhookAsync(webhookUrl);
+await bot.SetWebhook(webhookUrl);
 
 app.MapPost("/bot", async (Update update,IServiceProvider serviceProvider) => {  await HandleUpdateRest(update, serviceProvider); });
 
