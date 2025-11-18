@@ -28,6 +28,14 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
         public decimal UserShare { get; set; }
     }
 
+    public class MonthlyExpenseSummary
+    {
+        public string Month { get; set; } = string.Empty;
+        public decimal TotalSharedExpense { get; set; }
+        public decimal TotalReceiptAmount { get; set; }
+        public Dictionary<string, decimal> PayerReceiptTotalBreakdown { get; set; } = new Dictionary<string, decimal>();
+    }
+
     public class ReceiptService
     {
         private readonly ApplicationDbContext _context;
@@ -233,6 +241,55 @@ namespace PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
             }
 
             return sharedAmounts;
+        }
+
+        public async Task<List<MonthlyExpenseSummary>> GetMonthlySharedExpenses(DateTime startDate, DateTime endDate)
+        {
+            var startDateOnly = startDate.Date;
+            var endDateOnly = endDate.Date;
+            
+            // Fetch all receipts in date range that have at least one shared item
+            var receipts = await _context.Receipts
+                .Where(r => r.Date.Date >= startDateOnly 
+                         && r.Date.Date <= endDateOnly
+                         && r.Items.Any(i => i.Shares.Count > 1 || i.Shares.All(s => s.Share < 100)))
+                .Include(r => r.Items)
+                .ThenInclude(i => i.Shares)
+                .OrderBy(r => r.Date)
+                .ToListAsync();
+
+            // Helper function to check if an item is shared
+            bool IsSharedItem(ReceiptItem item) => item.Shares.Count > 1 || item.Shares.All(s => s.Share < 100);
+
+            var monthlyData = receipts
+                .GroupBy(r => new { r.Date.Year, r.Date.Month })
+                .Select(g => new MonthlyExpenseSummary
+                {
+                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                    
+                    // Total of all shared item prices (before taxes/tips)
+                    TotalSharedExpense = g.Sum(r => r.Items
+                        .Where(IsSharedItem)
+                        .Sum(i => i.TotalPrice)),
+                    
+                    // Total actual receipt amounts paid (includes taxes, tips, etc.)
+                    TotalReceiptAmount = g
+                        .Where(r => r.Items.Any(IsSharedItem))
+                        .Sum(r => r.TotalAmount),
+                    
+                    // Breakdown by who paid (actual receipt totals paid)
+                    PayerReceiptTotalBreakdown = g
+                        .Where(r => r.Items.Any(IsSharedItem))
+                        .GroupBy(r => string.IsNullOrEmpty(r.PaidByUserFullName) ? r.PaidByUserName : r.PaidByUserFullName)
+                        .ToDictionary(
+                            payerGroup => payerGroup.Key,
+                            payerGroup => payerGroup.Sum(r => r.TotalAmount)
+                        )
+                })
+                .OrderBy(m => m.Month)
+                .ToList();
+
+            return monthlyData;
         }
     }
 }

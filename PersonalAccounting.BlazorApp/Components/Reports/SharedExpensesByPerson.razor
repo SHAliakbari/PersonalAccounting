@@ -9,23 +9,109 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
 @inject ReceiptService ReceiptService
-@inject UserManager<ApplicationUser> UserManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 @attribute [Authorize]
 
-<PageTitle>Shared Expenses by Person</PageTitle>
+<PageTitle>Monthly Shared Expenses</PageTitle>
 
-<h1>Shared Expenses by Person</h1>
+<h1>Household Monthly Shared Expenses Report</h1>
+<p class="text-muted">This report shows all shared expenses across the household, including taxes and additional charges.</p>
 
-<div style="max-width: 800px; margin: 0 auto;">
-    <canvas id="sharedExpensesChart"></canvas>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <label for="startDate" class="form-label">Start Date:</label>
+        <InputDate id="startDate" class="form-control" @bind-Value="startDate" />
+    </div>
+    <div class="col-md-4">
+        <label for="endDate" class="form-label">End Date:</label>
+        <InputDate id="endDate" class="form-control" @bind-Value="endDate" />
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <button class="btn btn-primary" @onclick="LoadChartData">Update Report</button>
+    </div>
 </div>
 
-@code {
+@if (isLoading)
+{
+    <p><em>Loading chart data...</em></p>
+}
 
-    private ApplicationUser user = default!;
+@if (monthlyExpenses != null && monthlyExpenses.Any())
+{
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <h5>Report Explanation:</h5>
+                <ul class="mb-0">
+                    <li><strong>Shared Items Total:</strong> Sum of prices for items shared between multiple people (excludes personal items)</li>
+                    <li><strong>Actual Amount Paid:</strong> Total amount actually paid on receipts (includes taxes, tips, service charges)</li>
+                    <li><strong>Additional Charges:</strong> Difference between actual amount and itemized total (calculated automatically in chart)</li>
+                    <li><strong>Bars:</strong> Show who paid for receipts (actual amounts paid)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+}
+
+<div style="max-width: 1200px; margin: 0 auto; @(monthlyExpenses == null || !monthlyExpenses.Any() ? "display: none;" : "")">
+    <canvas id="monthlyExpensesChart"></canvas>
+</div>
+
+@if (monthlyExpenses != null && monthlyExpenses.Any())
+{
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h4>Monthly Summary Table</h4>
+            <table class="table table-striped table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Month</th>
+                        <th>Shared Items Total</th>
+                        <th>Charges and Personal items</th>
+                        <th>Actual Amount Paid</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var month in monthlyExpenses)
+                    {
+                        var additionalCharges = month.TotalReceiptAmount - month.TotalSharedExpense;
+                        <tr>
+                            <td>@month.Month</td>
+                            <td>$@month.TotalSharedExpense.ToString("N2")</td>
+                            <td>$@additionalCharges.ToString("N2")</td>
+                            <td><strong>$@month.TotalReceiptAmount.ToString("N2")</strong></td>
+                        </tr>
+                    }
+                    <tr class="table-secondary">
+                        <td><strong>Total</strong></td>
+                        <td><strong>$@monthlyExpenses.Sum(m => m.TotalSharedExpense).ToString("N2")</strong></td>
+                        <td><strong>$@((monthlyExpenses.Sum(m => m.TotalReceiptAmount) - monthlyExpenses.Sum(m => m.TotalSharedExpense)).ToString("N2"))</strong></td>
+                        <td><strong>$@monthlyExpenses.Sum(m => m.TotalReceiptAmount).ToString("N2")</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else if (!isLoading && (monthlyExpenses == null || !monthlyExpenses.Any()))
+{
+    <div class="alert alert-warning">
+        No shared expenses found for the selected date range.
+    </div>
+}
+
+@code {
+    private DateTime startDate;
+    private DateTime endDate = DateTime.Today;
+    private bool isLoading = false;
+    private List<MonthlyExpenseSummary>? monthlyExpenses;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Set default start date to one year ago
+        startDate = DateTime.Today.AddYears(-1);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -35,35 +121,55 @@
         }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var authUser = authState.User;
-        
-        if (authUser.Identity?.IsAuthenticated == true)
-        {
-            user = await UserManager.GetUserAsync(authUser);
-            if (user is null)
-            {
-                throw new InvalidOperationException("Unable to load user.");
-            }
-        }
-    }
-
     private async Task LoadChartData()
     {
         try
         {
-            var sharedExpenses = await ReceiptService.GetSharedExpensesPerUser(user.Id);
+            isLoading = true;
+            StateHasChanged();
 
-            var labels = sharedExpenses.Keys.ToList();
-            var data = sharedExpenses.Values.Select(v => (double)v).ToList();
+            monthlyExpenses = await ReceiptService.GetMonthlySharedExpenses(startDate, endDate);
 
-            await JSRuntime.InvokeVoidAsync("renderBarChart", "sharedExpensesChart", labels, data, "Shared Expenses Amount");
+            if (monthlyExpenses != null && monthlyExpenses.Any())
+            {
+                var labels = monthlyExpenses.Select(m => m.Month).ToList();
+                
+                // Line 1: Shared items total
+                var sharedItemsTotal = monthlyExpenses.Select(m => (double)m.TotalSharedExpense).ToList();
+                
+                // Line 2: Actual receipt amounts
+                var receiptTotals = monthlyExpenses.Select(m => (double)m.TotalReceiptAmount).ToList();
+
+                // Get all unique payers
+                var allPayers = monthlyExpenses
+                    .SelectMany(m => m.PayerReceiptTotalBreakdown.Keys)
+                    .Distinct()
+                    .ToList();
+
+                // Create datasets for each payer (using actual receipt totals)
+                var payerDatasets = allPayers.Select(payer => new
+                {
+                    label = payer,
+                    data = monthlyExpenses.Select(m => 
+                        m.PayerReceiptTotalBreakdown.ContainsKey(payer) ? (double)m.PayerReceiptTotalBreakdown[payer] : 0.0).ToList()
+                }).ToList();
+
+                await JSRuntime.InvokeVoidAsync("renderMonthlyExpensesChartWithReceipts", 
+                    "monthlyExpensesChart", 
+                    labels, 
+                    sharedItemsTotal,
+                    receiptTotals,
+                    JsonSerializer.Serialize(payerDatasets));
+            }
+
+            isLoading = false;
+            StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error loading chart data: {ex.Message}");
+            isLoading = false;
+            StateHasChanged();
         }
     }
 }

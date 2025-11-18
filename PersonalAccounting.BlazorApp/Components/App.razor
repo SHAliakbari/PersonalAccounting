@@ -74,6 +74,281 @@
                 }
             });
         }
+
+        window.renderMonthlyExpensesChart = function (canvasId, labels, totalExpenses, payerDatasetsJson) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) {
+                console.error('Canvas element not found:', canvasId);
+                return;
+            }
+
+            // Destroy existing chart if it exists
+            if (window.chartInstances && window.chartInstances[canvasId]) {
+                window.chartInstances[canvasId].destroy();
+            }
+
+            if (!window.chartInstances) {
+                window.chartInstances = {};
+            }
+
+            const payerDatasets = JSON.parse(payerDatasetsJson);
+
+            // Generate distinct colors for each payer
+            const colors = [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba(255, 159, 64, 0.7)',
+                'rgba(199, 199, 199, 0.7)',
+                'rgba(83, 102, 255, 0.7)',
+                'rgba(255, 99, 255, 0.7)',
+                'rgba(99, 255, 132, 0.7)'
+            ];
+
+            // Create stacked bar datasets for each payer
+            const barDatasets = payerDatasets.map((payer, index) => ({
+                type: 'bar',
+                label: payer.label + ' (Paid)',
+                data: payer.data,
+                backgroundColor: colors[index % colors.length],
+                borderColor: colors[index % colors.length].replace('0.7', '1'),
+                borderWidth: 1,
+                stack: 'payers'
+            }));
+
+            // Create line dataset for total expenses
+            const lineDataset = {
+                type: 'line',
+                label: 'Total Monthly Expenses',
+                data: totalExpenses,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            };
+
+            window.chartInstances[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [...barDatasets, lineDataset]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Amount ($)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Shared Expenses & Payer Breakdown',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                                },
+                                footer: function(tooltipItems) {
+                                    let total = 0;
+                                    tooltipItems.forEach(function(tooltipItem) {
+                                        if (tooltipItem.dataset.type === 'bar') {
+                                            total += tooltipItem.parsed.y;
+                                        }
+                                    });
+                                    return 'Total Paid: $' + total.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        window.renderMonthlyExpensesChartWithReceipts = function (canvasId, labels, sharedItemsTotal, receiptTotals, payerDatasetsJson) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) {
+                console.error('Canvas element not found:', canvasId);
+                return;
+            }
+
+            // Destroy existing chart if it exists
+            if (window.chartInstances && window.chartInstances[canvasId]) {
+                window.chartInstances[canvasId].destroy();
+            }
+
+            if (!window.chartInstances) {
+                window.chartInstances = {};
+            }
+
+            const payerDatasets = JSON.parse(payerDatasetsJson);
+
+            // Generate distinct colors for each payer
+            const colors = [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)',
+                'rgba(255, 159, 64, 0.7)',
+                'rgba(199, 199, 199, 0.7)',
+                'rgba(83, 102, 255, 0.7)',
+                'rgba(255, 99, 255, 0.7)',
+                'rgba(99, 255, 132, 0.7)'
+            ];
+
+            // Create stacked bar datasets for each payer (actual amounts paid)
+            const barDatasets = payerDatasets.map((payer, index) => ({
+                type: 'bar',
+                label: payer.label + ' (Paid)',
+                data: payer.data,
+                backgroundColor: colors[index % colors.length],
+                borderColor: colors[index % colors.length].replace('0.7', '1'),
+                borderWidth: 1,
+                stack: 'payers'
+            }));
+
+            // Line 1: Shared items total (before taxes/tips)
+            const sharedItemsLineDataset = {
+                type: 'line',
+                label: 'Shared Items Total',
+                data: sharedItemsTotal,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.4,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            };
+
+            // Line 2: Actual receipt totals (includes taxes/tips)
+            const receiptTotalsLineDataset = {
+                type: 'line',
+                label: 'Actual Amount Paid (incl. taxes/tips)',
+                data: receiptTotals,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            };
+
+            window.chartInstances[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [...barDatasets, sharedItemsLineDataset, receiptTotalsLineDataset]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Amount ($)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Shared Expenses (Itemized vs Actual)',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                                },
+                                footer: function(tooltipItems) {
+                                    let barTotal = 0;
+                                    let sharedTotal = 0;
+                                    let actualTotal = 0;
+                                    
+                                    tooltipItems.forEach(function(tooltipItem) {
+                                        if (tooltipItem.dataset.type === 'bar') {
+                                            barTotal += tooltipItem.parsed.y;
+                                        } else if (tooltipItem.dataset.label === 'Shared Items Total') {
+                                            sharedTotal = tooltipItem.parsed.y;
+                                        } else if (tooltipItem.dataset.label === 'Actual Amount Paid (incl. taxes/tips)') {
+                                            actualTotal = tooltipItem.parsed.y;
+                                        }
+                                    });
+                                    
+                                    const difference = actualTotal - sharedTotal;
+                                    return [
+                                        'Total Paid by All: $' + barTotal.toFixed(2),
+                                        'Additional Charges: $' + difference.toFixed(2)
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     </script>
 </body>
 
