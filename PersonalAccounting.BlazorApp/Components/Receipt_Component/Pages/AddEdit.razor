@@ -521,13 +521,18 @@ else
                     // if (thumbnail != null)
                     //     thumbnail.Save(thumbnailStream, System.Drawing.Imaging.ImageFormat.Png);
                 }
-                var readyToUpload = GetBlackWhiteImage(memoryStream);
 
-                if (readyToUpload.Length > (4 * 1024 * 1024)) // > 4MB
-                {
-                    uploadStatus = $"File is too large - Max(4MB) - Now({readyToUpload.Length})";
-                    return;
-                }
+
+                //for free ai document processing, we need to convert to black and white
+                // var readyToUpload = GetBlackWhiteImage(memoryStream);
+
+                // if (readyToUpload.Length > (4 * 1024 * 1024)) // > 4MB
+                // {
+                //     uploadStatus = $"File is too large - Max(4MB) - Now({readyToUpload.Length})";
+                //     return;
+                // }
+
+                var readyToUpload = memoryStream.ToArray();
 
                 var fileName = await blobService.Upload(file.Name, readyToUpload);
 
