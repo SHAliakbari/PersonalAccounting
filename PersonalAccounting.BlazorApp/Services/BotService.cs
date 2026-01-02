@@ -163,10 +163,9 @@ namespace PersonalAccounting.BlazorApp.Services
                         }
 
                         var month = parts.Length>2 ? int.Parse(parts[2]) : DateTime.Now.Month;
-                        
-                        var (startDate, endDate) = GetMonthStartAndEnd(DateTime.Now.Year, month);
+                        var year = parts.Length>3 ? int.Parse(parts[3]) : DateTime.Now.Year;
 
-
+                        var (startDate, endDate) = GetMonthStartAndEnd(year, month);
 
                         await GenerateReceiptReport(msg.Chat.Id, userName, startDate, endDate);
                     }
