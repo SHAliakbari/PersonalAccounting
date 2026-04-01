@@ -162,8 +162,19 @@ namespace PersonalAccounting.BlazorApp.Services
                             return;
                         }
 
-                        var month = parts.Length>2 ? int.Parse(parts[2]) : DateTime.Now.Month;
-                        var year = parts.Length>3 ? int.Parse(parts[3]) : DateTime.Now.Year;
+                        int month = DateTime.Now.Month;
+                        int year = DateTime.Now.Year;
+
+                        if (parts.Length > 2 && !int.TryParse(parts[2], out month))
+                        {
+                            await telegramBotClient.SendMessage(msg.Chat, "invalid month value");
+                            return;
+                        }
+                        if (parts.Length > 3 && !int.TryParse(parts[3], out year))
+                        {
+                            await telegramBotClient.SendMessage(msg.Chat, "invalid year value");
+                            return;
+                        }
 
                         var (startDate, endDate) = GetMonthStartAndEnd(year, month);
 
