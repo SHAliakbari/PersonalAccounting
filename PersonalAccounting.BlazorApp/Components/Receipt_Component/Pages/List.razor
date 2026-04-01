@@ -21,13 +21,22 @@
 @inject IdentityUserAccessor UserAccessor
 
 <PageTitle>Receipts List</PageTitle>
-<div>
-    <h3>
-        Receipts List
-    </h3>
-    <div>
-        <InputText type="text" @bind-Value="SearchTerm" />
-        <button type="button btn-sm" @onclick="HandleSearchButton">Filter</button>
+<div class="page-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">
+            <i class="bi bi-receipt me-2 text-success"></i>Receipts
+        </h3>
+        @if (isAdmin)
+        {
+            <a href="/Receipts/Add" class="btn btn-success">
+                <i class="bi bi-plus-circle me-1"></i> Add New
+            </a>
+        }
+    </div>
+    <div class="input-group mb-3" style="max-width: 400px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <InputText type="text" class="form-control" @bind-Value="SearchTerm" placeholder="Search receipts..." />
+        <button class="btn btn-outline-success" type="button" @onclick="HandleSearchButton">Filter</button>
     </div>
 </div>
 
@@ -38,19 +47,31 @@
 
         .grid .receiptsList {
             width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
             .grid .receiptsList td, .grid .receiptsList th {
-                border: 1px solid gray;
+                border: 1px solid #e9ecef;
+                padding: 0.5rem 0.75rem;
             }
 
-            /* Stripe effect */
+            .grid .receiptsList thead th {
+                background-color: #1a1a2e;
+                color: #fff;
+                font-weight: 500;
+            }
+
             .grid .receiptsList tbody tr {
-                background-color: rgba(0,0,0,0.04);
+                background-color: #fff;
             }
 
                 .grid .receiptsList tbody tr:nth-child(even) {
-                    background: rgba(255,255,255,0.4);
+                    background: #f8f9fa;
+                }
+
+                .grid .receiptsList tbody tr:hover {
+                    background-color: #f0f4ff;
                 }
 
 </style>
@@ -58,13 +79,11 @@
 @if (isAdmin)
 {
     <div class="text-end">
-        <a href="/Receipts/Add" class="btn btn-primary">Add New</a>
     </div>
 }
-<br />
 @if (isLoading == true)
 {
-    <p><em>Loading...</em></p>
+    <p><span class="loading-spinner"></span> Loading...</p>
 }
 else
 {
@@ -90,10 +109,10 @@ else
                 <TemplateColumn Title="Actions">
                     <div class="@GetRowClass(context)">
                         <div>
-                            <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+                            <button class="btn btn-sm btn-outline-primary" @onclick="@(() => NavigateToDetails(context.Id))"><i class="bi bi-eye me-1"></i>Details</button>
                             @if (isAdmin)
                             {
-                                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteReceipt(context.Id))">Delete</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="@(() => DeleteReceipt(context.Id))"><i class="bi bi-trash me-1"></i>Delete</button>
                             }
                         </div>
                         <div>
