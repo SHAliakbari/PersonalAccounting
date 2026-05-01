@@ -1,0 +1,53 @@
+@using PersonalAccounting.Domain.Data
+@using Microsoft.AspNetCore.Identity
+
+<div class="row">
+    <div class="col-sm-6">
+        <div class="form-floating mb-3">
+            <InputDate disabled="@(!IsAdmin)" @bind-Value="Master.Date" class="form-control" aria-required="true" />
+            <label for="Date">Receipt Date</label>
+            <ValidationMessage For="() => Master.Date" class="text-danger" />
+        </div>
+        <div class="form-floating mb-3">
+            <InputText disabled="@(!IsAdmin)" @bind-Value="Master.MerchantName" class="form-control" aria-required="true" placeholder="Freshco, ..." />
+            <label for="MerchantName">MerchantName</label>
+            <ValidationMessage For="() => Master.MerchantName" class="text-danger" />
+        </div>
+        <div class="form-floating mb-3">
+            <InputText disabled="@(!IsAdmin)" @bind-Value="Master.ShopName" class=" form-control" aria-required="true" placeholder="Shoppers, Freshco, ..." />
+            <label for="ShopName">ShopName</label>
+            <ValidationMessage For="() => Master.ShopName" class="text-danger" />
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="form-floating mb-3">
+            <InputNumber disabled="@(!IsAdmin)" @bind-Value="Master.TotalAmount" @oninput="(ChangeEventArgs e) => { Master.TotalAmount = string.IsNullOrWhiteSpace(e.Value.ToString()) ? 0 : decimal.Parse((e.Value.ToString())); }" class="form-control" aria-required="true" />
+            <label for="TotalAmount">TotalAmount</label>
+            <ValidationMessage For="() => Master.TotalAmount" class="text-danger" />
+        </div>
+        <div class="form-floating mb-3">
+            <InputText required disabled="@(!IsAdmin)" @bind-Value="Master.PaidByUserName" class=" form-control" @onblur="FillPayedByUserInformation" aria-required="true" placeholder="your_email@email.com" />
+            <label for="PayedByUserName">PaidByUserName</label>
+            <ValidationMessage For="() => Master.PaidByUserName" class="text-danger" />
+        </div>
+        @if (IsAdmin)
+        {
+            <div class="form-floating mb-3">
+                <button type="button" class="btn btn-link text-primary" @onclick="OpenShareModalForAll">Manage Shares For All</button>
+                <AddEditShares Users="@Users" ReceiptItem="@SelectedDetail" IsForAll="true" OnSharesSaved="ShareModalForAllSave" @ref="shareModalAll" />
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Receipt Master { get; set; } = default!;
+    [Parameter] public bool IsAdmin { get; set; }
+    [Parameter] public List<ApplicationUser> Users { get; set; } = new();
+    [Parameter] public ReceiptItem? SelectedDetail { get; set; }
+    [Parameter] public EventCallback OpenShareModalForAll { get; set; }
+    [Parameter] public EventCallback ShareModalForAllSave { get; set; }
+    [Parameter] public EventCallback<FocusEventArgs> FillPayedByUserInformation { get; set; }
+
+    private AddEditShares shareModalAll = default!;
+}

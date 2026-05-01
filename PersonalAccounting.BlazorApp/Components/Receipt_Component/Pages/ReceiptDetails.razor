@@ -1,0 +1,179 @@
+@rendermode InteractiveServer
+
+@using PersonalAccounting.Domain.Data
+@using PersonalAccounting.BlazorApp.Components.Receipt_Component.Pages
+@using PersonalAccounting.BlazorApp.Components.Receipt_Component.Services
+@using Microsoft.AspNetCore.Identity
+@using System.Text
+
+<h2>Details</h2>
+<div class="text-end">
+    <div style="display:inline-block">
+        @foreach (var item in usersSymbol)
+        {
+            <span class=@($"badge {item.Style}")>@item.UserName</span>
+        }
+    </div> &nbsp;
+    @if (IsAdmin)
+    {
+        <button type="button" @onclick="NewDetail" class="btn btn-success btn-sm">
+            New Detail
+        </button>
+    }
+</div>
+<div class="grid">
+    <div class="table-responsive">
+        <table class="details">
+            <thead>
+                <tr>
+                    <td>#</td>
+                    <td>Category</td>
+                    <td>Description</td>
+                    <td>Quantity</td>
+                    <td>QuantityUnit</td>
+                    <td>UnitPrice</td>
+                    <td>TotalPrice</td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var detail in Master.Items)
+                {
+                    <tr class="@GetRowClass(detail)">
+                        @if (GetRowClass(detail) == "selectedRow")
+                        {
+                            <td colspan="8">
+                                <AddEditRow detail="CurrentDetail" IsNew="IsDetailNew" OnItemSaved="HandleDetailSubmit"
+                                OnEditCancelled="CancelNewDetail"></AddEditRow>
+                            </td>
+                        }
+                        else
+                        {
+                            <td></td>
+                            <td>@detail.Category</td>
+                            <td>@detail.Description</td>
+                            <td>@detail.Quantity</td>
+                            <td>@detail.QuantityUnit</td>
+                            <td>@detail.UnitPrice</td>
+                            <td>@detail.TotalPrice</td>
+                            <td>
+                                @if (IsAdmin)
+                                {
+                                    <button type="button" class="btn btn-link text-danger" @onclick="() => DeleteDetail(detail)">Delete</button>
+                                    <button type="button" class="btn btn-link text-warning" @onclick="() => EditDetail(detail)">Edit</button>
+                                }
+
+                                <button type="button" class="btn btn-link text-primary" @onclick="@(() => OpenShareModal(detail))">Manage Shares</button>
+                                <AddEditShares IsReadOnly=!IsAdmin Users=@Users ReceiptItem="@SelectedDetail" @ref="shareModal" />
+                                <div>
+                                    <small>@GetShareContent(detail)</small>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (IsDetailNew && CurrentDetail != null)
+    {
+        <AddEditRow detail="CurrentDetail" IsNew="IsDetailNew" OnItemSaved="HandleDetailSubmit"
+        OnEditCancelled="CancelNewDetail"></AddEditRow>
+    }
+</div>
+
+@code {
+    [Parameter] public Receipt Master { get; set; }
+    [Parameter] public bool IsAdmin { get; set; }
+    [Parameter] public List<ApplicationUser> Users { get; set; }
+    [Parameter] public EventCallback OnDetailSaved { get; set; }
+
+    private ReceiptItem? CurrentDetail = null;
+    private ReceiptItem? SelectedDetail = null;
+    private bool IsDetailNew = true;
+
+    private AddEditShares shareModal;
+
+    List<UserSymbol> usersSymbol = new List<UserSymbol>();
+
+    protected override void OnParametersSet()
+    {
+        // Populate usersSymbol based on Master.Items
+        Master.Items.SelectMany(x => x.Shares.Select(x => x.UserName)).Distinct()
+       .ToList().ForEach(x =>
+       {
+           if (!usersSymbol.Any(userSymbol => userSymbol.UserName == x))
+           {
+               usersSymbol.Add(new UserSymbol { UserName = x, Symbol = x.Substring(0, 2).ToUpper(), Style = UserSymbol.Styles[usersSymbol.Count] });
+           }
+       });
+    }
+
+    private void OpenShareModal(ReceiptItem detail)
+    {
+        SelectedDetail = detail;
+        shareModal.OpenModal();
+    }
+
+    private string GetRowClass(ReceiptItem detail)
+    {
+        if (CurrentDetail?.Id == detail.Id && CurrentDetail?.Description == detail.Description)
+        {
+            return "selectedRow";
+        }
+        return "";
+    }
+
+    private void CancelNewDetail()
+    {
+        CurrentDetail = null;
+        IsDetailNew = false;
+    }
+
+    private void NewDetail()
+    {
+        CurrentDetail = new ReceiptItem();
+        IsDetailNew = true;
+    }
+
+    private void DeleteDetail(ReceiptItem detail)
+    {
+        if (!Master.Items.Remove(detail))
+        {
+            // Log error
+            return;
+        }
+        CancelNewDetail();
+    }
+
+    private void EditDetail(ReceiptItem detail)
+    {
+        CurrentDetail = detail;
+        IsDetailNew = false;
+    }
+
+    private async Task HandleDetailSubmit()
+    {
+        if (CurrentDetail.Id == 0)
+        {
+            Master.Items.Add(CurrentDetail);
+            CancelNewDetail();
+        }
+        await OnDetailSaved.InvokeAsync();
+    }
+
+    private MarkupString GetShareContent(ReceiptItem item)
+    {
+        StringBuilder builder1 = new StringBuilder();
+
+        foreach (var share in item.Shares)
+        {
+            var userSymbol = usersSymbol.FirstOrDefault(x => x.UserName == share.UserName);
+            if (userSymbol == null) continue;
+
+            builder1.AppendLine($"<span class=\"badge {userSymbol.Style}\" title=\"{share.UserName}\">{(share.Share * item.TotalPrice / 100).ToString("##,##.##")}</span>");
+        }
+
+        return new MarkupString(builder1.ToString());
+    }
+}

@@ -4,7 +4,9 @@
 
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">PersonalAccounting</a>
+        <a class="navbar-brand" href="">
+            <i class="bi bi-wallet2 me-2"></i>PersonalAccounting
+        </a>
     </div>
 </div>
 
@@ -14,7 +16,7 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <i class="bi bi-house-door-fill nav-icon" aria-hidden="true"></i> Home
             </NavLink>
         </div>
 
@@ -22,29 +24,29 @@
             <Authorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+                        <i class="bi bi-person-circle nav-icon" aria-hidden="true"></i> @context.User.Identity?.Name
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Transfers/List">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> List of requests
+                        <i class="bi bi-arrow-left-right nav-icon" aria-hidden="true"></i> Transfers
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Receipts/List">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> List of Receipts
+                        <i class="bi bi-receipt nav-icon" aria-hidden="true"></i> Receipts
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="reports/shared-expenses">
-                        <span class="bi bi-bar-chart-line-fill-nav-menu" aria-hidden="true"></span> Expenses Report
+                        <i class="bi bi-bar-chart-line-fill nav-icon" aria-hidden="true"></i> Expenses Report
                     </NavLink>
                 </div>
                 @if (context.User.IsInRole("admin"))
                 {
                     <div class="nav-item px-3">
                         <NavLink class="nav-link" href="Account/Users">
-                            <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> List of Users
+                            <i class="bi bi-people-fill nav-icon" aria-hidden="true"></i> Users
                         </NavLink>
                     </div>
                 }
@@ -53,7 +55,7 @@
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                         <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+                            <i class="bi bi-box-arrow-left nav-icon" aria-hidden="true"></i> Logout
                         </button>
                     </form>
                 </div>
@@ -62,12 +64,12 @@
             <NotAuthorized>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+                        <i class="bi bi-person-plus nav-icon" aria-hidden="true"></i> Register
                     </NavLink>
                 </div>
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+                        <i class="bi bi-box-arrow-in-right nav-icon" aria-hidden="true"></i> Login
                     </NavLink>
                 </div>
             </NotAuthorized>

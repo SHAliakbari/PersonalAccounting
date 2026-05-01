@@ -19,13 +19,22 @@
 @inject IdentityUserAccessor UserAccessor
 
 <PageTitle>TransferRequest List</PageTitle>
-<div>
-    <h3>
-        TransferRequest List
-    </h3>
-    <div>
-        <InputText type="text" @bind-Value="SearchTerm" />
-        <button type="button btn-sm" @onclick="HandleSearchButton">Filter</button>
+<div class="page-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">
+            <i class="bi bi-arrow-left-right me-2 text-primary"></i>Transfers
+        </h3>
+        @if (isAdmin)
+        {
+            <a href="/Transfers/Add" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Add New
+            </a>
+        }
+    </div>
+    <div class="input-group mb-3" style="max-width: 400px;">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <InputText type="text" class="form-control" @bind-Value="SearchTerm" placeholder="Search transfers..." />
+        <button class="btn btn-outline-primary" type="button" @onclick="HandleSearchButton">Filter</button>
     </div>
 </div>
 
@@ -36,19 +45,31 @@
 
         .grid .transfersList {
             width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
             .grid .transfersList td, .grid .transfersList th {
-                border: 1px solid gray;
+                border: 1px solid #e9ecef;
+                padding: 0.5rem 0.75rem;
             }
 
-            /* Stripe effect */
+            .grid .transfersList thead th {
+                background-color: #1a1a2e;
+                color: #fff;
+                font-weight: 500;
+            }
+
             .grid .transfersList tbody tr {
-                background-color: rgba(0,0,0,0.04);
+                background-color: #fff;
             }
 
                 .grid .transfersList tbody tr:nth-child(even) {
-                    background: rgba(255,255,255,0.4);
+                    background: #f8f9fa;
+                }
+
+                .grid .transfersList tbody tr:hover {
+                    background-color: #f0f4ff;
                 }
 
 </style>
@@ -56,19 +77,17 @@
 @if (isAdmin)
 {
     <div class="text-end">
-        <a href="/Transfers/Add" class="btn btn-primary">Add New</a>
     </div>
 }
-<br />
 @if (isLoading == true)
 {
-    <p><em>Loading...</em></p>
+    <p><span class="loading-spinner"></span> Loading...</p>
 }
 else
 {
     <div class="grid" tabindex="-1">
 
-        <QuickGrid TGridItem="TransferRequest" Items="@requests" Class="transfersList">
+        <QuickGrid TGridItem="TransferRequest" Items="@requests" Class="transfersList" Pagination="paginationState">
             <TemplateColumn Title="Request Date">
                 <div>
                     <div>@context.RequestDate</div>
@@ -82,9 +101,11 @@ else
             <PropertyColumn Property="@(c => c.ReceiverNote)" Sortable="true" Title="Note" />
             <PropertyColumn Property="@(c => c.Status)" Sortable="true" Title="Status" />
             <TemplateColumn Title="Actions">
-                <button class="btn btn-sm btn-success" @onclick="@(() => NavigateToDetails(context.Id))">Details</button>
+                <button class="btn btn-sm btn-outline-primary" @onclick="@(() => NavigateToDetails(context.Id))"><i class="bi bi-eye me-1"></i>Details</button>
             </TemplateColumn>
         </QuickGrid>
+
+        <Paginator State="paginationState" ShowPageSizeOptions="true" PageSizeOptions="new int[] { 10, 25, 50, 100, 200 }" />
     </div>
 }
 
@@ -95,6 +116,8 @@ else
     IQueryable<TransferRequest>? requests;
 
     bool isAdmin = false;
+
+    private PaginationState paginationState = new() { ItemsPerPage = 100 };
 
     protected override async Task OnInitializedAsync()
     {
