@@ -96,7 +96,7 @@ else
         </div>
         <div class="grid" tabindex="-1">
 
-            <QuickGrid TGridItem="Receipt" Items="@requests" Class="receiptsList">
+            <QuickGrid TGridItem="Receipt" Items="@requests" Class="receiptsList" Pagination="paginationState">
                 <TemplateColumn Title="Receipt Date">
                     <div>
                         <div>@context.Date.ToString("dd/MM/yyyy") @context.Time.ToString()</div>
@@ -121,6 +121,8 @@ else
                     </div>
                 </TemplateColumn>
             </QuickGrid>
+
+            <Paginator State="paginationState" ShowPageSizeOptions="true" PageSizeOptions="new int[] { 10, 25, 50, 100, 200 }" />
 
             @if (showConfirmation)
             {
@@ -160,6 +162,8 @@ else
     List<UserSymbol> usersSymbol = new List<UserSymbol>();
 
     bool isAdmin = false;
+
+    private PaginationState paginationState = new() { ItemsPerPage = 100 };
 
     protected override async Task OnInitializedAsync()
     {

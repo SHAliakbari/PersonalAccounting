@@ -1,0 +1,45 @@
+@using PersonalAccounting.Domain.Data
+
+<div class="form-group">
+    <label>Receipt File:</label>
+    @if (IsAdmin)
+    {
+        <InputFile OnChange="LoadFiles" accept="image/*" capture />
+        @UploadStatus
+    }
+    @if (Master.Thumbnail != null)
+    {
+        <img @ondblclick="() => InvokeOpenFile(Master)" width="100" height="100" src="data:image;base64, @System.Convert.ToBase64String(Master.Thumbnail)" />
+    }
+    @if (IsReceiptImageUploaded)
+    {
+        <button disabled="@IsProcessing" type="button" class="btn btn-warning btn-lg" @onclick="ShowConfirmationClearFormReprocess">
+            @if (IsProcessing)
+            {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                @("Processing...")
+            }
+            else
+            {
+                <text>Process receipt file</text>
+            }
+        </button>
+    }
+    @if (IsProcessing)
+    {
+        <span>Processing</span>
+    }
+</div>
+
+@code {
+    [Parameter] public Receipt Master { get; set; } = default!;
+    [Parameter] public bool IsAdmin { get; set; }
+    [Parameter] public string UploadStatus { get; set; } = string.Empty;
+    [Parameter] public bool IsReceiptImageUploaded { get; set; }
+    [Parameter] public bool IsProcessing { get; set; }
+    [Parameter] public EventCallback<InputFileChangeEventArgs> LoadFiles { get; set; }
+    [Parameter] public EventCallback<Receipt> OpenFile { get; set; }
+    [Parameter] public EventCallback ShowConfirmationClearFormReprocess { get; set; }
+
+    private async Task InvokeOpenFile(Receipt r) => await OpenFile.InvokeAsync(r);
+}
