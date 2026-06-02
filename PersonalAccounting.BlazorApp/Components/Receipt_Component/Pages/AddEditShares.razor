@@ -68,9 +68,22 @@
 
 @code {
     private List<ApplicationUser> ActiveUsers => this.Users.Where(x => x.EmailConfirmed).ToList();
+    private ReceiptItem? receiptItem;
 
     [Parameter]
-    public ReceiptItem ReceiptItem { get; set; }
+    public ReceiptItem ReceiptItem
+    {
+        get => receiptItem!;
+        set
+        {
+            if (IsForAll && value != null && !ReferenceEquals(receiptItem, value))
+            {
+                ShowModal = true;
+            }
+
+            receiptItem = value;
+        }
+    }
 
     [Parameter]
     public List<ApplicationUser> Users { get; set; }
