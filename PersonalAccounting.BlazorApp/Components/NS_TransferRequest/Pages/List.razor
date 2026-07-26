@@ -49,14 +49,14 @@
             border-spacing: 0;
         }
 
-            .grid .transfersList td, .grid .transfersList th {
-                border: 1px solid #e9ecef;
+              .grid .transfersList td, .grid .transfersList th {
+               border: 1px solid #e9ecef;
                 padding: 0.5rem 0.75rem;
             }
-
-            .grid .transfersList thead th {
-                background-color: #1a1a2e;
-                color: #fff;
+    /*
+                  .grid .transfersList thead th, .quickgrid[theme=default] .col-title, .quickgrid[theme=default] .sort-indicator {
+                background-color: #1a1a2e !important;
+                color: #fff !important;
                 font-weight: 500;
             }
 
@@ -70,8 +70,7 @@
 
                 .grid .transfersList tbody tr:hover {
                     background-color: #f0f4ff;
-                }
-
+                } */
 </style>
 
 @if (isAdmin)
@@ -105,7 +104,7 @@ else
             </TemplateColumn>
         </QuickGrid>
 
-        <Paginator State="paginationState" ShowPageSizeOptions="true" PageSizeOptions="new int[] { 10, 25, 50, 100, 200 }" />
+        <Paginator State="paginationState" />
     </div>
 }
 
