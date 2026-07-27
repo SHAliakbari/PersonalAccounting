@@ -83,10 +83,24 @@ else
         <DataAnnotationsValidator />
         <div class="row">
             <div class="col-sm-6">
-                <div class="form-floating mb-3">
-                    <InputDate disabled="@(!isAdmin)" @bind-Value="master.RequestDate" class="form-control" aria-required="true" />
-                    <label for="RequestDate">Request Date</label>
-                    <ValidationMessage For="() => master.RequestDate" class="text-danger" />
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputDate disabled="@(!isAdmin)" @bind-Value="master.RequestDate" @bind-Value:after="OnEnglishDateChanged" class="form-control" aria-required="true" />
+                            <label for="RequestDate">Request Date (English)</label>
+                            <ValidationMessage For="() => master.RequestDate" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-3">
+                            <InputText disabled="@(!isAdmin)" @bind-Value="shamsiDate" @bind-Value:after="OnShamsiDateChanged" class="form-control" placeholder="1403/01/15" />
+                            <label for="ShamsiDate">Request Date (Shamsi)</label>
+                            @if (!string.IsNullOrEmpty(shamsiDateError))
+                            {
+                                <span class="text-danger small">@shamsiDateError</span>
+                            }
+                        </div>
+                    </div>
                 </div>
                 <div class="form-floating mb-3">
                     <InputText disabled="@(!isAdmin)" @onblur="FillFromUserInformation" @bind-Value="master.FromUserName" class=@{$"{FromUserClassName} form-control"} aria-required="true" placeholder="name@example.com" list="fromUserList" />
@@ -306,6 +320,9 @@ else
     private string ToUserClassName = string.Empty;
     private string ReceiverUserClassName = string.Empty;
 
+    private string shamsiDate = string.Empty;
+    private string shamsiDateError = string.Empty;
+
     private bool isNew { get; set; }
 
     string uploadStatus = "";
@@ -332,10 +349,12 @@ else
         if (isNew)
         {
             master = new TransferRequest(); // Create new instance
+            shamsiDate = ConvertGregorianToShamsi(master.RequestDate);
         }
         else
         {
             await LoadMaster(int.Parse(id));
+            shamsiDate = ConvertGregorianToShamsi(master.RequestDate);
         }
     }
 
@@ -396,6 +415,48 @@ else
         ReceiverUserClassName = "border border-danger";
         master.ReceiverUserFullName = string.Empty;
         master.ReceiverUserId = string.Empty;
+    }
+
+    private void OnEnglishDateChanged()
+    {
+        shamsiDate = ConvertGregorianToShamsi(master.RequestDate);
+        shamsiDateError = string.Empty;
+    }
+
+    private void OnShamsiDateChanged()
+    {
+        try
+        {
+            var parts = shamsiDate.Split('/');
+            if (parts.Length == 3 &&
+                int.TryParse(parts[0], out int year) &&
+                int.TryParse(parts[1], out int month) &&
+                int.TryParse(parts[2], out int day))
+            {
+                var pc = new PersianCalendar();
+                var gregorianDate = new DateTime(year, month, day, pc);
+                master.RequestDate = DateOnly.FromDateTime(gregorianDate);
+                shamsiDateError = string.Empty;
+            }
+            else
+            {
+                shamsiDateError = "Format: YYYY/MM/DD (e.g., 1403/01/15)";
+            }
+        }
+        catch (Exception)
+        {
+            shamsiDateError = "Invalid date. Format: YYYY/MM/DD";
+        }
+    }
+
+    private string ConvertGregorianToShamsi(DateOnly date)
+    {
+        var pc = new PersianCalendar();
+        var dateTime = date.ToDateTime(TimeOnly.MinValue);
+        var year = pc.GetYear(dateTime);
+        var month = pc.GetMonth(dateTime);
+        var day = pc.GetDayOfMonth(dateTime);
+        return $"{year:0000}/{month:00}/{day:00}";
     }
 
     private async Task OpenFile(TransferRequestDetail detail)
