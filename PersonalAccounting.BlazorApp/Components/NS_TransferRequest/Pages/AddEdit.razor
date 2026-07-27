@@ -89,21 +89,47 @@ else
                     <ValidationMessage For="() => master.RequestDate" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText disabled="@(!isAdmin)" @onblur="FillFromUserInformation" @bind-Value="master.FromUserName" class=@{$"{FromUserClassName} form-control"} aria-required="true" placeholder="name@example.com" />
+                    <InputText disabled="@(!isAdmin)" @onblur="FillFromUserInformation" @bind-Value="master.FromUserName" class=@{$"{FromUserClassName} form-control"} aria-required="true" placeholder="name@example.com" list="fromUserList" />
                     <label for="FromUserName">From</label>
-                    
+                    <datalist id="fromUserList">
+                        @if (users != null)
+                        {
+                            @foreach (var user in users)
+                            {
+                                <option value="@user.Email">@user.FullName</option>
+                            }
+                        }
+                    </datalist>
                     <ValidationMessage For="() => master.FromUserName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText disabled="@(!isAdmin)" @onblur="FillToUserInformation" @bind-Value="master.ToUserName" class=@{$"{ToUserClassName} form-control"} aria-required="true" placeholder="Custom note" />
+                    <InputText disabled="@(!isAdmin)" @onblur="FillToUserInformation" @bind-Value="master.ToUserName" class=@{$"{ToUserClassName} form-control"} aria-required="true" placeholder="Custom note" list="toUserList" />
                     <label for="ToUserName">To</label>
+                    <datalist id="toUserList">
+                        @if (users != null)
+                        {
+                            @foreach (var user in users)
+                            {
+                                <option value="@user.Email">@user.FullName</option>
+                            }
+                        }
+                    </datalist>
                     <ValidationMessage For="() => master.ToUserName" class="text-danger" />
                 </div>
                 <hr />
                 <div class="form-floating mb-3">
                     <InputText disabled="@(!isAdmin)" @onblur="handleReceiverUserNameChange" @bind-Value="master.ReceiverUserName" class=@{$"{ReceiverUserClassName} form-control"
-} aria-required="true" placeholder="name@example.com" />
+} aria-required="true" placeholder="name@example.com" list="receiverUserList" />
                     <label for="ReceiverUserName">Receive</label>
+                    <datalist id="receiverUserList">
+                        @if (users != null)
+                        {
+                            @foreach (var user in users)
+                            {
+                                <option value="@user.Email">@user.FullName</option>
+                            }
+                        }
+                    </datalist>
                     <ValidationMessage For="() => master.ReceiverUserName" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
